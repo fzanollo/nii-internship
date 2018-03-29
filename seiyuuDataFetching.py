@@ -9,11 +9,6 @@ import xml.etree.ElementTree as ET
 
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-# PREFIXES
-rdfs = "http://www.w3.org/2000/01/rdf-schema#"
-wdt = "http://www.wikidata.org/prop/direct/"
-jikanAPI = "https://api.jikan.me/" 
-
 def getSeiyuuListFromWikidata(limitTo):
 	sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
 
@@ -101,18 +96,27 @@ def getAnimeWorkedOnFor(seiyu):
 	return animeWorkedOn
 
 def seiyuInfoToTriples(seiyu):
-	output = u''
+	output = u'\n'
 
 	# seiyu_uri rdfs:label name
-	output += u'<{0}> <{1}> <{2}>\n'.format(seiyu['item']['value'], rdfs + ":label", seiyu['itemLabel']['value'])
+	output += u'<{0}> {1} "{2}"@{3} .\n'.format(seiyu['item']['value'], "rdfs:label", seiyu['itemLabel']['value'], seiyu['itemLabel']['xml:lang'])
 
 	# seiyu_uri wdt:ann_id ann_id
-	# output += '<{0}> <{1}> <{2}>\n'.format(seiyu['item']['value'], wdt + ":P1982", seiyu['ANN_ID']['value'])
+	# output += '<{0}> <{1}> <{2}> .\n'.format(seiyu['item']['value'], "wdt:P1982", seiyu['ANN_ID']['value'])
 
 	# seiyu_uri wdt:mal_id mal_id
-	output += u'<{0}> <{1}> <{2}>\n'.format(seiyu['item']['value'], wdt + ":P4084", jikanAPI + 'person/' + seiyu['MAL_ID']['value'])
+	output += u'<{0}> {1} <{2}> .\n'.format(seiyu['item']['value'], "wdt:P4084", 'jikan:person/' + seiyu['MAL_ID']['value'])
 
 	return output
+
+def prefixes():
+	prefixes = [('rdfs', "http://www.w3.org/2000/01/rdf-schema#"), ('wdt', "http://www.wikidata.org/prop/direct/"), ('jikan', "https://api.jikan.me/" )]
+	prefixesForOutput = u''
+
+	for prefix in prefixes:
+		prefixesForOutput += u'@prefix {0}: <{1}> .\n'.format(prefix[0], prefix[1])
+
+	return prefixesForOutput
 
 def main(outputFileName, limitTo):
 	seiyus = getSeiyuuListFromWikidata(limitTo)
@@ -136,6 +140,8 @@ def main(outputFileName, limitTo):
 
 	outputFile = io.open(outputFileName, 'w', encoding="utf-8")
 
+	outputFile.write(prefixes())
+
 	for seiyu in seiyusWithMalId:
 		outputFile.write(seiyuInfoToTriples(seiyu))
 
@@ -143,16 +149,16 @@ def main(outputFileName, limitTo):
 		animesOutput = u''
 		for anime in animeWorkedOn:
 			# seiyu_uri wdt:member_of anime_mal_id
-			animesOutput += u'<{0}> <{1}> <{2}>\n'.format(seiyu['item']['value'], wdt + ":P463", jikanAPI + 'anime/' + str(anime))
+			animesOutput += u'<{0}> {1} <{2}> .\n'.format(seiyu['item']['value'], "wdt:P463", 'jikan:anime/' + str(anime))
 
 		outputFile.write(animesOutput)
 
 if __name__ == '__main__':
-	outputFileName = 'output'
+	outputFileName = 'output.ttl'
 	limitTo = 1 # less or equal to 0 implies no limit
 
 	if len(sys.argv) >= 2:
-		outputFileName = sys.argv[1]
+		outputFileName = sys.argv[1] + '.ttl'
 
 	if len(sys.argv) >= 3:
 		limitTo = sys.argv[2]
