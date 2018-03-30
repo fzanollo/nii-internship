@@ -1,6 +1,7 @@
 import sys
 import requests
 import io
+from sets import Set
 
 import yaml
 import json
@@ -16,15 +17,12 @@ def getSeiyuuListFromWikidata(limitTo):
 	SELECT 
 		?item 
 		(SAMPLE(?label) AS ?itemLabel) 
-		(SAMPLE(?Anime_News_Network_ID) AS ?ANN_ID) 
 		(SAMPLE(?MyAnimeList_ID) AS ?MAL_ID) 
 	WHERE {
 		{?item wdt:P106 wd:Q622807.}
 
 		?item rdfs:label ?label.
 		FILTER(LANGMATCHES(LANG(?label), "en"))
-
-		OPTIONAL { ?item wdt:P1982 ?Anime_News_Network_ID. }
 		OPTIONAL { ?item wdt:P4084 ?MyAnimeList_ID. }
 	}
 	GROUP BY ?item
@@ -75,7 +73,7 @@ def getNameAndSurname(seiyu):
 	if len(completeName) >= 2:
 		name, surname = completeName
 	else:
-		name = completeName[0]
+		surname = completeName[0]
 
 	return name, surname
 
@@ -90,19 +88,23 @@ def getAnimeWorkedOnFor(seiyu):
 	
 	animeWorkedOn = []
 
-	for work in response['voice_acting_role']:
-		animeWorkedOn.append(work['anime']['mal_id'])
+	if 'voice_acting_role' in response:
+		for work in response['voice_acting_role']:
+			animeWorkedOn.append(work['anime']['mal_id'])
 
 	return animeWorkedOn
 
 def seiyuInfoToTriples(seiyu):
 	output = u'\n'
 
+	# seiyu_uri wdt:instance_of wd:human
+	output += u'<{0}> {1} {2} .\n'.format(seiyu['item']['value'], 'wdt:P31', 'wd:Q5')
+
+	# seiyu_uri wdt:occupation wd:seiyu
+	output += u'<{0}> {1} {2} .\n'.format(seiyu['item']['value'], 'wdt:P106', 'wd:Q622807')
+
 	# seiyu_uri rdfs:label name
 	output += u'<{0}> {1} "{2}"@{3} .\n'.format(seiyu['item']['value'], "rdfs:label", seiyu['itemLabel']['value'], seiyu['itemLabel']['xml:lang'])
-
-	# seiyu_uri wdt:ann_id ann_id
-	# output += '<{0}> <{1}> <{2}> .\n'.format(seiyu['item']['value'], "wdt:P1982", seiyu['ANN_ID']['value'])
 
 	# seiyu_uri wdt:mal_id mal_id
 	output += u'<{0}> {1} <{2}> .\n'.format(seiyu['item']['value'], "wdt:P4084", 'jikan:person/' + seiyu['MAL_ID']['value'])
@@ -110,7 +112,7 @@ def seiyuInfoToTriples(seiyu):
 	return output
 
 def prefixes():
-	prefixes = [('rdfs', "http://www.w3.org/2000/01/rdf-schema#"), ('wdt', "http://www.wikidata.org/prop/direct/"), ('jikan', "https://api.jikan.me/" )]
+	prefixes = [('rdfs', 'http://www.w3.org/2000/01/rdf-schema#'), ('wdt', 'http://www.wikidata.org/prop/direct/'), ('jikan', 'https://api.jikan.me/' ),('wd','http://www.wikidata.org/entity/')]
 	prefixesForOutput = u''
 
 	for prefix in prefixes:
@@ -127,31 +129,45 @@ def main(outputFileName, limitTo):
 		name, surname = getNameAndSurname(seiyu)
 		
 		if 'MAL_ID' not in seiyu:
-			print('recovering MAL id of: ' + name + ' - ' + surname)
+			# print('recovering MAL id of: ' + name + ' - ' + surname)
 			malId = recoverMalId(seiyu)
 			seiyu['MAL_ID'] = {"type": "literal", "value": str(malId)}
 			
 		if seiyu['MAL_ID']['value'] != -1:
-			print('adding seiyu: ' + name + ' - ' + surname)
+			# print('adding seiyu: ' + name + ' - ' + surname)
 			seiyusWithMalId.append(seiyu)
-		print('-----')
+		# print('-----')
 
 	# print(json.dumps(seiyus ,indent=2))
 
-	outputFile = io.open(outputFileName, 'w', encoding="utf-8")
+	print(str(len(seiyusWithMalId)) + ' seiyu with mal_id information retrieved')
 
+	animeURIs = Set()
+
+	outputFile = io.open(outputFileName, 'w', encoding="utf-8")
 	outputFile.write(prefixes())
 
 	for seiyu in seiyusWithMalId:
 		outputFile.write(seiyuInfoToTriples(seiyu))
 
 		animeWorkedOn = getAnimeWorkedOnFor(seiyu)
-		animesOutput = u''
-		for anime in animeWorkedOn:
-			# seiyu_uri wdt:member_of anime_mal_id
-			animesOutput += u'<{0}> {1} <{2}> .\n'.format(seiyu['item']['value'], "wdt:P463", 'jikan:anime/' + str(anime))
 
-		outputFile.write(animesOutput)
+		animeWorkedOnOutput = u''
+		for anime in animeWorkedOn:
+			animeURI = 'jikan:anime/' + str(anime)
+			animeURIs.add(animeURI)
+			# seiyu_uri wdt:member_of anime_mal_id
+			animeWorkedOnOutput += u'<{0}> {1} <{2}> .\n'.format(seiyu['item']['value'], "wdt:P463", animeURI)
+
+		outputFile.write(animeWorkedOnOutput)
+
+	print(str(len(animeURIs)) + ' total anime')
+
+	outputFile.write(u'\n')
+	for animeURI in animeURIs:
+		# anime_uri wdt:instance_of wd:anime
+		outputFile.write(u'<{0}> {1} {2} .\n'.format(animeURI, 'wdt:P31', 'wd:Q1107'))
+
 
 if __name__ == '__main__':
 	outputFileName = 'output.ttl'
