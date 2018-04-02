@@ -124,6 +124,8 @@ def main(outputFileName, limitTo):
 	seiyus = getSeiyuuListFromWikidata(limitTo)
 	seiyusWithMalId = []
 
+	print('* Seiyu list received from wikidata *')
+
 	# try to recover mal_id for seiyu that are missing it 
 	for seiyu in seiyus:
 		name, surname = getNameAndSurname(seiyu)
@@ -177,6 +179,6 @@ if __name__ == '__main__':
 		outputFileName = sys.argv[1] + '.ttl'
 
 	if len(sys.argv) >= 3:
-		limitTo = sys.argv[2]
+		limitTo = int(sys.argv[2])
 
 	main(outputFileName, limitTo)
