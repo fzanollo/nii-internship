@@ -71,7 +71,8 @@ def getNameAndSurname(seiyu):
 	completeName = seiyu['itemLabel']['value'].replace(u'\u014d', 'ou').replace(u'\u016b', 'uu').split(' ')
 	
 	if len(completeName) >= 2:
-		name, surname = completeName
+		name = completeName[0]
+		surname = completeName[1]
 	else:
 		surname = completeName[0]
 
