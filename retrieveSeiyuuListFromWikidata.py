@@ -6,7 +6,7 @@ import json
 
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-def getSeiyuuListFromWikidata(limitTo):
+def getSeiyuuListFromWikidata(outputFileName, limitTo):
 	sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
 
 	queryString = """
@@ -34,7 +34,7 @@ def getSeiyuuListFromWikidata(limitTo):
 	bindings = yaml.load(json.dumps(results["results"]["bindings"]))
 
 	outputFile = io.open(outputFileName, 'w', encoding="utf-8")
-	outputFile.write(json.dumps(bindings,ensure_ascii=False))
+	outputFile.write(u'' + json.dumps(bindings))
 
 if __name__ == '__main__':
 	outputFileName = 'output.json'
