@@ -14,7 +14,7 @@ def consultAPI(query):
 	API_CONSULTS_COUNTER += 1
 	
 	if 'error' in response:
-		print('\n api error: [{0}] when asking for query: [{1}] with API_CONSULTS_COUNTER: {2}'.format(response['error'], query, API_CONSULTS_COUNTER))
+		print(u'\n api error: [{0}] when asking for query: [{1}] with API_CONSULTS_COUNTER: {2}\n'.format(response['error'], query, API_CONSULTS_COUNTER))
 
 	return response
 
@@ -41,8 +41,9 @@ def recoverMalId(seiyu):
 
 		if not found:
 			currentPage += 1
-
-			response = consultAPI(baseURL + surname + '/' + str(currentPage))
+			
+			if currentPage <= lastPage:
+				response = consultAPI(baseURL + surname + '/' + str(currentPage))
 
 	return malId
 
