@@ -17,9 +17,10 @@ def getSeiyuuWithAtLeastOneWork():
 	prefix jikan: <https://api.jikan.me/> 
 	prefix wd: <http://www.wikidata.org/entity/> 
 
-	SELECT ?seiyu_uri
+	SELECT ?seiyu_uri ?seiyu_name
 	WHERE {
 		?seiyu_uri wdt:P106 wd:Q622807.
+		?seiyu_uri rdfs:label ?seiyu_name.
 		?seiyu_uri wdt:P463 ?anime_uri.
 	}group by ?seiyu_uri
 	"""
@@ -60,7 +61,7 @@ def getAnimegraphy(seiyu_uri):
 
 	return works
 
-def main(nodesFileName, edgesFileName):
+def main(nodesFileName, edgesFileName, requiredWorksInCommon):
 	nodesFile = io.open(nodesFileName, 'w', encoding="utf-8")
 	edgesFile = io.open(edgesFileName, 'w', encoding="utf-8")
 
@@ -71,33 +72,36 @@ def main(nodesFileName, edgesFileName):
 
 	# NODES
 	nodesFile.write(u'Id,Label,timeset\n')
-	nodeID = 0
 	for item in seiyuuWithAtLeastOneWork:
 		seiyu_uri = item['seiyu_uri']['value']
+		seiyu_name = item['seiyu_name']['value']
 
 		if seiyu_uri not in seiyuuWorksDict:
 			seiyuuWorksDict[seiyu_uri] = getAnimegraphy(seiyu_uri)
 
-			nodesFile.write(u'{0},{1},\n'.format(nodeID, seiyu_uri))
-			nodeID += 1
+			nodesFile.write(u'{0},{1},\n'.format(seiyu_uri, seiyu_name))
 
 	# EDGES
 	edgesFile.write(u'Source,Target,Type,Id,Label,timeset,Weight\n')
 	edgeID = 0
 	for seiyu1, works1 in seiyuuWorksDict.iteritems():
 		for seiyu2, works2 in seiyuuWorksDict.iteritems():
-			if seiyu1 < seiyu2 and len(works1.intersection(works2)) > 0: #seiyu1 < seiyu2 para que no haya repetidos (ver si esta bien / mejorar)
+			if seiyu1 < seiyu2 and len(works1.intersection(works2)) >= requiredWorksInCommon: #seiyu1 < seiyu2 para que no haya repetidos (ver si esta bien / mejorar)
 				edgesFile.write(u'{0},{1},Undirected,{2},,,1\n'.format(seiyu1, seiyu2, edgeID))
 				edgeID += 1
 
 if __name__ == '__main__':
 	nodesFileName = 'nodesFile.csv'
 	edgesFileName = 'edgesFile.csv'
+	requiredWorksInCommon = 0
 
 	if len(sys.argv) >= 2:
 		nodesFileName = sys.argv[1] + '.csv'
 
 	if len(sys.argv) >= 3:
 		edgesFileName = sys.argv[2] + '.csv'
+	
+	if len(sys.argv) >= 4:
+		requiredWorksInCommon = int(sys.argv[3])
 
-	main(nodesFileName, edgesFileName)
+	main(nodesFileName, edgesFileName, requiredWorksInCommon)
