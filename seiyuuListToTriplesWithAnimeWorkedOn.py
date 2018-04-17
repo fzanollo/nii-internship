@@ -101,7 +101,7 @@ def seiyuInfo(seiyu):
 
 	# seiyu_uri wdt:mal_id mal_id
 	if seiyu['MAL_ID']['value'] != -1:
-		output += u'<{0}> {1} <{2}> .\n'.format(seiyu['item']['value'], "wdt:P4084", 'jikan:person/' + str(seiyu['MAL_ID']['value']))
+		output += u'<{0}> {1} <{2}> .\n'.format(seiyu['item']['value'], "wdt:P4084", 'jikan/person/' + str(seiyu['MAL_ID']['value']))
 
 	return output
 
