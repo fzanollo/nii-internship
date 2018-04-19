@@ -14,7 +14,6 @@ def getSeiyuuWithAtLeastOneWork():
 	queryString = """
 	prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
 	prefix wdt: <http://www.wikidata.org/prop/direct/> 
-	prefix jikan: <https://api.jikan.me/> 
 	prefix wd: <http://www.wikidata.org/entity/> 
 
 	SELECT ?seiyu_uri ?seiyu_name
@@ -39,7 +38,6 @@ def getAnimegraphy(seiyu_uri):
 	queryString = """
 	prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
 	prefix wdt: <http://www.wikidata.org/prop/direct/> 
-	prefix jikan: <https://api.jikan.me/> 
 	prefix wd: <http://www.wikidata.org/entity/> 
 
 	SELECT ?anime_uri

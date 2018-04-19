@@ -78,7 +78,7 @@ def getAnimeWorkedOnFor(seiyu):
 	return animeWorkedOn
 
 def outputPrefixes():
-	prefixes = [('rdfs', 'http://www.w3.org/2000/01/rdf-schema#'), ('wdt', 'http://www.wikidata.org/prop/direct/'), ('jikan', 'https://api.jikan.me/' ),('wd','http://www.wikidata.org/entity/')]
+	prefixes = [('rdfs', 'http://www.w3.org/2000/01/rdf-schema#'), ('wdt', 'http://www.wikidata.org/prop/direct/'), ('wd','http://www.wikidata.org/entity/')]
 	prefixesForOutput = u''
 
 	for prefix in prefixes:
@@ -101,7 +101,7 @@ def seiyuInfo(seiyu):
 
 	# seiyu_uri wdt:mal_id mal_id
 	if seiyu['MAL_ID']['value'] != -1:
-		output += u'<{0}> {1} <{2}> .\n'.format(seiyu['item']['value'], "wdt:P4084", 'jikan/person/' + str(seiyu['MAL_ID']['value']))
+		output += u'<{0}> {1} <{2}> .\n'.format(seiyu['item']['value'], "wdt:P4084", 'https://api.jikan.me/person/' + str(seiyu['MAL_ID']['value']))
 
 	return output
 
@@ -110,7 +110,7 @@ def animeWorkedOn(seiyu):
 
 	output = u''
 	for anime in animeWorkedOn:
-		animeURI = 'jikan:anime/' + str(anime)
+		animeURI = 'https://api.jikan.me/anime/' + str(anime)
 		# seiyu_uri wdt:member_of anime_mal_id
 		output += u'<{0}> {1} <{2}> .\n'.format(seiyu['item']['value'], "wdt:P463", animeURI)
 
