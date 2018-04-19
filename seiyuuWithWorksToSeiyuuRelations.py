@@ -5,8 +5,8 @@ import yaml
 import json
 
 from sets import Set
-
 from SPARQLWrapper import SPARQLWrapper, JSON
+from pymongo import MongoClient
 
 def getSeiyuuWithAtLeastOneWork():
 	sparql = SPARQLWrapper("http://localhost:8890/sparql")
@@ -65,29 +65,36 @@ def main(nodesFileName, edgesFileName, requiredWorksInCommon):
 	nodesFile = io.open(nodesFileName, 'w', encoding="utf-8")
 	edgesFile = io.open(edgesFileName, 'w', encoding="utf-8")
 
+	client = MongoClient()
+	db = client.seiyuuData
+	seiyuuCompleteData = db.seiyuu
+
 	seiyuuWithAtLeastOneWork = getSeiyuuWithAtLeastOneWork()
 	# {'seiyu_uri': {'type': 'uri', 'value': 'http://www.wikidata.org/entity/Q49524'}}
 	
 	seiyuuWorksDict = {}
 
 	# NODES
-	nodesFile.write(u'Id,Label,timeset\n')
+	nodesFile.write(u'Id,Label,Popularity\n')
 	for item in seiyuuWithAtLeastOneWork:
 		seiyu_uri = item['seiyu_uri']['value']
 		seiyu_name = item['seiyu_name']['value']
 
+		seiyuuData = seiyuuCompleteData.find_one({"id":seiyu_uri})
+		seiyu_popularity = seiyuuData['data']['member_favorites']
+
 		if seiyu_uri not in seiyuuWorksDict:
 			seiyuuWorksDict[seiyu_uri] = getAnimegraphy(seiyu_uri)
 
-			nodesFile.write(u'{0},{1},\n'.format(seiyu_uri, seiyu_name))
+			nodesFile.write(u'{0},{1},{2}\n'.format(seiyu_uri, seiyu_name, seiyu_popularity))
 
 	# EDGES
-	edgesFile.write(u'Source,Target,Type,Id,Label,timeset,Weight\n')
+	edgesFile.write(u'Source,Target,Type,Id,Weight\n')
 	edgeID = 0
 	for seiyu1, works1 in seiyuuWorksDict.iteritems():
 		for seiyu2, works2 in seiyuuWorksDict.iteritems():
 			if seiyu1 < seiyu2 and len(works1.intersection(works2)) >= requiredWorksInCommon: #seiyu1 < seiyu2 para que no haya repetidos (ver si esta bien / mejorar)
-				edgesFile.write(u'{0},{1},Undirected,{2},,,1\n'.format(seiyu1, seiyu2, edgeID))
+				edgesFile.write(u'{0},{1},Undirected,{2},1\n'.format(seiyu1, seiyu2, edgeID))
 				edgeID += 1
 
 if __name__ == '__main__':
