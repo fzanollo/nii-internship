@@ -40,9 +40,10 @@ def getAnimegraphy(seiyu_uri):
 	prefix wdt: <http://www.wikidata.org/prop/direct/> 
 	prefix wd: <http://www.wikidata.org/entity/> 
 
-	SELECT ?anime_uri
+	SELECT ?anime_uri ?start_date
 	WHERE {{
 		<{0}> wdt:P463 ?anime_uri.
+		?anime_uri wdt:P580 ?start_date.
 	}}
 	""".format(seiyu_uri)
 
@@ -53,11 +54,19 @@ def getAnimegraphy(seiyu_uri):
 	bindings = yaml.load(json.dumps(results["results"]["bindings"]))
 	
 	works = Set()
-	for item in bindings:
-		anime_uri = item['anime_uri']['value']
-		works.add(anime_uri)
+	debut = 3000
 
-	return works
+	for item in bindings:
+		animeUri = item['anime_uri']['value']
+		works.add(animeUri)
+
+		startYear = item['start_date']['value'][:4]
+
+		if startYear != "None":
+			if int(startYear) < debut:
+				debut = int(startYear)
+	
+	return works, debut
 
 def main(nodesFileName, edgesFileName, requiredWorksInCommon):
 	nodesFile = io.open(nodesFileName, 'w', encoding="utf-8")
@@ -73,25 +82,27 @@ def main(nodesFileName, edgesFileName, requiredWorksInCommon):
 	seiyuuWorksDict = {}
 
 	# NODES
-	nodesFile.write(u'Id,Label,Popularity\n')
+	nodesFile.write(u'Id,Label,Popularity,Debut\n')
 	for item in seiyuuWithAtLeastOneWork:
-		seiyu_uri = item['seiyu_uri']['value']
-		seiyu_name = item['seiyu_name']['value']
+		seiyuUri = item['seiyu_uri']['value']
+		seiyuName = item['seiyu_name']['value']
 
-		seiyuuData = seiyuuCompleteData.find_one({"id":seiyu_uri})
-		seiyu_popularity = seiyuuData['data']['member_favorites']
+		seiyuuData = seiyuuCompleteData.find_one({"id":seiyuUri})
+		seiyuPopularity = seiyuuData['data']['member_favorites']
 
-		if seiyu_uri not in seiyuuWorksDict:
-			seiyuuWorksDict[seiyu_uri] = getAnimegraphy(seiyu_uri)
+		if seiyuUri not in seiyuuWorksDict:
+			works, debut = getAnimegraphy(seiyuUri)
+			seiyuuWorksDict[seiyuUri] = works
 
-			nodesFile.write(u'{0},{1},{2}\n'.format(seiyu_uri, seiyu_name, seiyu_popularity))
+			nodesFile.write(u'{0},{1},{2},{3}\n'.format(seiyuUri, seiyuName, seiyuPopularity, debut))
 
 	# EDGES
 	edgesFile.write(u'Source,Target,Type,Id,Weight\n')
 	edgeID = 0
 	for seiyu1, works1 in seiyuuWorksDict.iteritems():
 		for seiyu2, works2 in seiyuuWorksDict.iteritems():
-			if seiyu1 < seiyu2 and len(works1.intersection(works2)) >= requiredWorksInCommon: #seiyu1 < seiyu2 para que no haya repetidos (ver si esta bien / mejorar)
+			worksInCommon = len(works1.intersection(works2))
+			if seiyu1 < seiyu2 and worksInCommon >= requiredWorksInCommon: #seiyu1 < seiyu2 para que no haya repetidos (ver si esta bien / mejorar)
 				edgesFile.write(u'{0},{1},Undirected,{2},1\n'.format(seiyu1, seiyu2, edgeID))
 				edgeID += 1
 
