@@ -11,17 +11,17 @@ def getSeiyuuListFromWikidata(outputFileName, limitTo):
 
 	queryString = """
 	SELECT 
-		?item 
-		(SAMPLE(?label) AS ?itemLabel) 
+		?seiyu_uri 
+		(SAMPLE(?label) AS ?seiyu_label) 
 		(SAMPLE(?MyAnimeList_ID) AS ?MAL_ID) 
 	WHERE {
-		{?item wdt:P106 wd:Q622807.}
+		{?seiyu_uri wdt:P106 wd:Q622807.}
 
-		?item rdfs:label ?label.
+		?seiyu_uri rdfs:label ?label.
 		FILTER(LANGMATCHES(LANG(?label), "en"))
-		OPTIONAL { ?item wdt:P4084 ?MyAnimeList_ID. }
+		OPTIONAL { ?seiyu_uri wdt:P4084 ?MyAnimeList_ID. }
 	}
-	GROUP BY ?item
+	GROUP BY ?seiyu_uri
 	"""
 
 	if limitTo > 0:

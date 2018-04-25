@@ -20,7 +20,7 @@ def getSeiyuuWithAtLeastOneWork():
 	WHERE {
 		?seiyu_uri wdt:P106 wd:Q622807.
 		?seiyu_uri rdfs:label ?seiyu_name.
-		?seiyu_uri wdt:P463 ?anime_uri.
+		?anime_uri wdt:P161 ?seiyu_uri.
 	}group by ?seiyu_uri
 	"""
 
@@ -42,7 +42,7 @@ def getAnimegraphy(seiyu_uri):
 
 	SELECT ?anime_uri ?start_date
 	WHERE {{
-		<{0}> wdt:P463 ?anime_uri.
+		?anime_uri wdt:P161 <{0}>.
 		?anime_uri wdt:P580 ?start_date.
 	}}
 	""".format(seiyu_uri)
@@ -54,19 +54,23 @@ def getAnimegraphy(seiyu_uri):
 	bindings = yaml.load(json.dumps(results["results"]["bindings"]))
 	
 	works = Set()
-	debut = 3000
 
 	for item in bindings:
 		animeUri = item['anime_uri']['value']
-		works.add(animeUri)
-
 		startYear = item['start_date']['value'][:4]
 
 		if startYear != "None":
-			if int(startYear) < debut:
-				debut = int(startYear)
+			startYear = int(startYear)
+		else:
+			startYear = None
+
+		works.add((animeUri, startYear))
 	
+	debut = getMinimumYear(works)
 	return works, debut
+
+def getMinimumYear(works):
+	return min(works, key = lambda t: t[1])[1]
 
 def main(nodesFileName, edgesFileName, requiredWorksInCommon):
 	nodesFile = io.open(nodesFileName, 'w', encoding="utf-8")
@@ -97,13 +101,13 @@ def main(nodesFileName, edgesFileName, requiredWorksInCommon):
 			nodesFile.write(u'{0},{1},{2},{3}\n'.format(seiyuUri, seiyuName, seiyuPopularity, debut))
 
 	# EDGES
-	edgesFile.write(u'Source,Target,Type,Id,Weight\n')
+	edgesFile.write(u'Source,Target,Type,Id,Weight,Since\n')
 	edgeID = 0
 	for seiyu1, works1 in seiyuuWorksDict.iteritems():
 		for seiyu2, works2 in seiyuuWorksDict.iteritems():
-			worksInCommon = len(works1.intersection(works2))
-			if seiyu1 < seiyu2 and worksInCommon >= requiredWorksInCommon: #seiyu1 < seiyu2 para que no haya repetidos (ver si esta bien / mejorar)
-				edgesFile.write(u'{0},{1},Undirected,{2},1\n'.format(seiyu1, seiyu2, edgeID))
+			worksInCommon = works1.intersection(works2)
+			if seiyu1 < seiyu2 and len(worksInCommon) >= requiredWorksInCommon: #seiyu1 < seiyu2 para que no haya repetidos (ver si esta bien / mejorar)
+				edgesFile.write(u'{0},{1},Undirected,{2},1,{3}\n'.format(seiyu1, seiyu2, edgeID,getMinimumYear(worksInCommon)))
 				edgeID += 1
 
 if __name__ == '__main__':
