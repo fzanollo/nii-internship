@@ -19,13 +19,14 @@ def outputPrefixes():
 def getStartAndEndingYearFromAiredString(airedString):
 	start = end = None
 
-	toIndex = airedString.find('to')
+	if airedString != "Not available":
+		toIndex = airedString.find('to')
 
-	if toIndex == -1:
-		start = airedString[-4:]
-	else:
-		start = airedString[toIndex-5:toIndex-1]
-		end = airedString[-4:]
+		if toIndex == -1:
+			start = airedString[-4:]
+		else:
+			start = airedString[toIndex-5:toIndex-1]
+			end = airedString[-4:]
 
 	return start, end
 
