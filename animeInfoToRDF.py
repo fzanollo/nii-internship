@@ -66,10 +66,10 @@ def main(inputFileName, outputFileName):
 		outputFile.write(u'<{0}> {1} {2} .\n'.format(animeUri, 'wdt:P31', 'wd:Q1107'))
 
 		# anime_uri wdt:start_time point_in_time
-		outputFile.write(u'<{0}> {1} {2} .\n'.format(animeUri, 'wdt:P580', startYear))
+		outputFile.write(u'<{0}> {1} "{2}" .\n'.format(animeUri, 'wdt:P580', startYear))
 
 		# anime_uri wdt:end_time point_in_time
-		outputFile.write(u'<{0}> {1} {2} .\n'.format(animeUri, 'wdt:P582', endYear))
+		outputFile.write(u'<{0}> {1} "{2}" .\n'.format(animeUri, 'wdt:P582', endYear))
 
 if __name__ == '__main__':
 	inputFileName = 'output.json'
