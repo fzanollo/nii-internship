@@ -20,7 +20,7 @@ def getSeiyuuWithAtLeastOneWork():
 	WHERE {
 		?seiyu_uri wdt:P106 wd:Q622807.
 		?seiyu_uri rdfs:label ?seiyu_name.
-		?anime_uri wdt:P161 ?seiyu_uri.
+		?anime_uri wdt:725 ?seiyu_uri.
 	}group by ?seiyu_uri
 	"""
 
@@ -42,7 +42,7 @@ def getAnimegraphy(seiyu_uri):
 
 	SELECT ?anime_uri ?start_date
 	WHERE {{
-		?anime_uri wdt:P161 <{0}>.
+		?anime_uri wdt:P725 <{0}>.
 		?anime_uri wdt:P580 ?start_date.
 	}}
 	""".format(seiyu_uri)
@@ -70,7 +70,16 @@ def getAnimegraphy(seiyu_uri):
 	return works, debut
 
 def getMinimumYear(works):
-	return min(works, key = lambda t: t[1])[1]
+	debut = 3000
+
+	for work in works:
+		if work[1] != None and work[1] < debut:
+			debut = work[1]
+
+	if debut == 3000:
+		debut = None
+
+	return debut
 
 def main(nodesFileName, edgesFileName, requiredWorksInCommon):
 	nodesFile = io.open(nodesFileName, 'w', encoding="utf-8")
@@ -107,7 +116,7 @@ def main(nodesFileName, edgesFileName, requiredWorksInCommon):
 		for seiyu2, works2 in seiyuuWorksDict.iteritems():
 			worksInCommon = works1.intersection(works2)
 			if seiyu1 < seiyu2 and len(worksInCommon) >= requiredWorksInCommon: #seiyu1 < seiyu2 para que no haya repetidos (ver si esta bien / mejorar)
-				edgesFile.write(u'{0},{1},Undirected,{2},1,{3}\n'.format(seiyu1, seiyu2, edgeID,getMinimumYear(worksInCommon)))
+				edgesFile.write(u'{0},{1},Undirected,{2},1,{3}\n'.format(seiyu1, seiyu2, edgeID, getMinimumYear(worksInCommon)))
 				edgeID += 1
 
 if __name__ == '__main__':

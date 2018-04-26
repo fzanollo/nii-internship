@@ -47,8 +47,8 @@ def main(inputFileName, outputFileName):
 			if 'voice_acting_role' in seiyuuData['data']:
 				for work in seiyuuData['data']['voice_acting_role']:
 					animeURI = 'https://api.jikan.me/anime/' + str(work['anime']['mal_id'])
-					# anime_uri wdt:cast_member seiyu_uri
-					outputFile.write(u'<{0}> {1} <{2}> .\n'.format(animeURI, "wdt:P161", seiyuuUri))
+					# anime_uri wdt:voice_actor seiyu_uri
+					outputFile.write(u'<{0}> {1} <{2}> .\n'.format(animeURI, "wdt:P725", seiyuuUri))
 
 		outputFile.write(u'\n')
 
