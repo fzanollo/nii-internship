@@ -20,7 +20,7 @@ def getSeiyuuWithAtLeastOneWork():
 	WHERE {
 		?seiyu_uri wdt:P106 wd:Q622807.
 		?seiyu_uri rdfs:label ?seiyu_name.
-		?anime_uri wdt:725 ?seiyu_uri.
+		?anime_uri wdt:P725 ?seiyu_uri.
 	}group by ?seiyu_uri
 	"""
 
