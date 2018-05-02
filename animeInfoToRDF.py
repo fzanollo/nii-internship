@@ -17,19 +17,36 @@ def outputPrefixes():
 	return prefixesForOutput
 
 def getStartAndEndingYearFromAiredString(airedString):
-	start = end = None
+	startYear = endYear = None
 
 	if airedString != "Not available":
 		toIndex = airedString.find('to')
 
 		if toIndex == -1:
-			start = airedString[-4:]
+			startYear = int(airedString[-4:])
 		else:
-			start = airedString[toIndex-5:toIndex-1]
-			end = airedString[-4:]
+			startYear = int(airedString[toIndex-5:toIndex-1])
 
-	return start, end
+			if '?' not in airedString:
+				endYear = int(airedString[-4:])
 
+	return startYear, endYear
+
+def getStartAndEndingYear(animeData):
+	startYear = animeData['data']['aired']['from']
+	endYear = animeData['data']['aired']['to']
+
+	if startYear == None:
+		startYear, end = getStartAndEndingYearFromAiredString(animeData['data']['aired_string'])
+	else:
+		startYear = int(animeData['data']['aired']['from'][:4])
+
+	if endYear == None:
+		start, endYear = getStartAndEndingYearFromAiredString(animeData['data']['aired_string'])
+	else:
+		endYear = int(animeData['data']['aired']['to'][:4])
+
+	return startYear, endYear
 
 def main(inputFileName, outputFileName):
 	animeUris = yaml.load(io.open(inputFileName, 'r', encoding="utf-8"))
@@ -45,32 +62,18 @@ def main(inputFileName, outputFileName):
 		animeUri = anime['anime_uri']['value']
 		animeData = animeCollection.find_one({"id":animeUri})
 
-		if animeData == None:
-			print(animeUri)
-		if not 'aired' in animeData['data']:
-			print(json.dumps(animeData,indent=2))
-
-		startYear = animeData['data']['aired']['from']
-		endYear = animeData['data']['aired']['to']
-
-		if startYear == None:
-			startYear, end = getStartAndEndingYearFromAiredString(animeData['data']['aired_string'])
-		else:
-			startYear = animeData['data']['aired']['from'][:4]
-
-		if endYear == None:
-			start, endYear = getStartAndEndingYearFromAiredString(animeData['data']['aired_string'])
-		else:
-			endYear = animeData['data']['aired']['to'][:4]
+		startYear, endYear = getStartAndEndingYear(animeData)
 
 		# anime_uri wdt:instance_of wd:anime 
 		outputFile.write(u'<{0}> {1} {2} .\n'.format(animeUri, 'wdt:P31', 'wd:Q1107'))
 
-		# anime_uri wdt:start_time point_in_time
-		outputFile.write(u'<{0}> {1} "{2}" .\n'.format(animeUri, 'wdt:P580', startYear))
+		if startYear != None:
+			# anime_uri wdt:start_time point_in_time
+			outputFile.write(u'<{0}> {1} {2} .\n'.format(animeUri, 'wdt:P580', startYear))
 
-		# anime_uri wdt:end_time point_in_time
-		outputFile.write(u'<{0}> {1} "{2}" .\n'.format(animeUri, 'wdt:P582', endYear))
+		if endYear != None:
+			# anime_uri wdt:end_time point_in_time
+			outputFile.write(u'<{0}> {1} {2} .\n'.format(animeUri, 'wdt:P582', endYear))
 
 if __name__ == '__main__':
 	inputFileName = 'output.json'
