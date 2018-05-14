@@ -1,5 +1,4 @@
 import sys
-import io
 from sets import Set
 
 import yaml
@@ -9,9 +8,6 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 from pymongo import MongoClient
 
 import networkx as nx
-import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
-from networkx.drawing.nx_agraph import graphviz_layout, to_agraph
 
 client = MongoClient()
 db = client.seiyuuData
@@ -115,43 +111,24 @@ def main(requiredWorksInCommon, fromYear, toYear):
 		nodesY.append(nx.number_of_nodes(socialNetworkGraph))
 		edgesY.append(nx.number_of_edges(socialNetworkGraph))
 
+	with open('aux/accumulationNodes_{0}_{1}-{2}.json'.format(requiredWorksInCommon, fromYear, toYear), 'w') as nodesOutputFile:
+		nodesOutputFile.write(json.dumps({"name": "nodes", "data": nodesY}))
 
-	# PLOT THE ANALYSIS	
-	plt.figure()
-
-	plt.plot(xs,nodesY,'ro-') 
-	plt.plot(xs,edgesY,'bv-') 
-
-	# plt.xticks(xs)
-	ax = plt.gca()
-	ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-	ax.yaxis.grid(which="major", color='k', linestyle='-', linewidth=.2)
-	
-	plt.legend(['Nodes','Edges'])
-	plt.xlabel('Years')
-	plt.ylabel('Quantity')
-	plt.title('Accumulation of nodes and edges over time')
-	plt.show()
-	plt.savefig('graphics/atLeast{0}Works_{1}-{2}.pdf'.format(requiredWorksInCommon, fromYear, toYear))
-
-	plt.close()
-	
-	# fig, ax = plt.subplots()
-	# ax.plot(xs, ys)
-	# ax.set_xticks(xs)
-	# ax.set_xticklabels([str(x)[-2:] for x in xs])
-	# ax.set_title('')
-	# ax.set_xlabel('')
-	# ax.set_ylabel('')
+	with open('aux/accumulationEdges_{0}_{1}-{2}.json'.format(requiredWorksInCommon, fromYear, toYear), 'w') as edgesOutputFile:
+		edgesOutputFile.write(json.dumps({"name": "edges", "data": edgesY}))
 
 if __name__ == '__main__':
 	requiredWorksInCommon = 1
 	fromYear = 1960
 	toYear = 2018
 
-	if len(sys.argv) >= 4:
+	if len(sys.argv) >= 2:
 		requiredWorksInCommon = int(sys.argv[1])
+		
+	if len(sys.argv) >= 3:
 		fromYear = int(sys.argv[2])
+
+	if len(sys.argv) >= 4:
 		toYear = int(sys.argv[3])
 
 	main(requiredWorksInCommon, fromYear, toYear)
