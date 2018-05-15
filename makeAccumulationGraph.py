@@ -111,11 +111,31 @@ def main(requiredWorksInCommon, fromYear, toYear):
 		nodesY.append(nx.number_of_nodes(socialNetworkGraph))
 		edgesY.append(nx.number_of_edges(socialNetworkGraph))
 
-	with open('aux/accumulationNodes_{0}_{1}-{2}.json'.format(requiredWorksInCommon, fromYear, toYear), 'w') as nodesOutputFile:
-		nodesOutputFile.write(json.dumps({"name": "nodes", "data": nodesY}))
+	xs = range(1960, 2019)
 
-	with open('aux/accumulationEdges_{0}_{1}-{2}.json'.format(requiredWorksInCommon, fromYear, toYear), 'w') as edgesOutputFile:
-		edgesOutputFile.write(json.dumps({"name": "edges", "data": edgesY}))
+	nodeFilename = 'accumulationNodes_{0}_{1}-{2}'.format(requiredWorksInCommon, fromYear, toYear)
+	with open('aux/{0}.json'.format(nodeFilename), 'w') as nodesOutputFile:
+		nodesOutputFile.write(json.dumps({
+		'xs': xs, 
+		'ys': nodesY, 
+		'color': 'r', 
+		'xlabel': 'Years', 
+		'ylabel': 'Number of nodes', 
+		'title': 'Accumulation of nodes over time, with at least {0} works in common'.format(requiredWorksInCommon), 
+		'outputFileName': nodeFilename
+	}))
+	
+	edgesFilename = 'accumulationEdges_{0}_{1}-{2}.json'.format(requiredWorksInCommon, fromYear, toYear)
+	with open('aux/{0}.json'.format(edgesFilename), 'w') as edgesOutputFile:
+		edgesOutputFile.write(json.dumps({
+		'xs': xs, 
+		'ys': edgesY, 
+		'color': 'b', 
+		'xlabel': 'Years', 
+		'ylabel': 'Number of edges', 
+		'title': 'Accumulation of edges over time, with at least {0} works in common'.format(requiredWorksInCommon), 
+		'outputFileName': edgesFilename
+	}))
 
 if __name__ == '__main__':
 	requiredWorksInCommon = 1
