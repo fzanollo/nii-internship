@@ -59,7 +59,7 @@ def outputJsonForGraphic(data, name, outputFileName, popularities=None):
 		'outputFileName': outputFileName
 	}))
 
-def main(inputFileName, outputFileName):
+def main(inputFileName):
 	socialNetworkGraph = nx.read_gexf(inputFileName)
 
 	popularities = nx.get_node_attributes(socialNetworkGraph, 'popularity')
@@ -75,17 +75,13 @@ def main(inputFileName, outputFileName):
 	outputJsonForGraphic(activityYears, 'Activity Years', 'popularityXactivityYears', popularities)
 
 	degree = dict(nx.degree(socialNetworkGraph))
-	outputJsonForGraphic(degree, 'Betweenness centrality', 'degreePerSeiyuu')
-	outputJsonForGraphic(degree, 'Betweenness centrality', 'popularityXdegree', popularities)
+	outputJsonForGraphic(degree, 'Degree', 'degreePerSeiyuu')
+	outputJsonForGraphic(degree, 'Degree', 'popularityXdegree', popularities)
 
 if __name__ == '__main__':
 	inputFileName = 'graphs/atLeast1Works_1960-1960.gexf'
-	outputFileName = 'output'
 
 	if len(sys.argv) >= 2:
 		inputFileName = sys.argv[1]
 
-	if len(sys.argv) >= 3:
-		outputFileName = sys.argv[2]
-
-	main(inputFileName, outputFileName)
+	main(inputFileName)
