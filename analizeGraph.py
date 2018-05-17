@@ -34,7 +34,7 @@ def getAnimegraphy(seiyuUri):
 	
 	return works
 
-def outputJsonForGraphic(data, name, outputFileName, popularities=None):
+def jsonForOrderedGraphic(data, name, outputFileName, popularities=None):
 	order = 'desc'
 	xyPairs = []
 
@@ -66,17 +66,17 @@ def main(inputFileName):
 	popularities = sorted(popularities.items(), key=lambda x: x[1], reverse=True)
 
 	btwC = nx.betweenness_centrality(socialNetworkGraph)
-	outputJsonForGraphic(btwC, 'Betweenness centrality', 'btwCPerSeiyuu')
-	outputJsonForGraphic(btwC, 'Betweenness centrality', 'popularityXbtwC', popularities)
+	jsonForOrderedGraphic(btwC, 'Betweenness centrality', 'btwCPerSeiyuu')
+	jsonForOrderedGraphic(btwC, 'Betweenness centrality', 'popularityXbtwC', popularities)
 
 	debuts = nx.get_node_attributes(socialNetworkGraph, 'debut')
 	activityYears = dict([(seiyu, 2018-int(debut)) for seiyu, debut in debuts.items()])
-	outputJsonForGraphic(activityYears, 'Activity Years', 'activityYearsPerSeiyuu')
-	outputJsonForGraphic(activityYears, 'Activity Years', 'popularityXactivityYears', popularities)
+	jsonForOrderedGraphic(activityYears, 'Activity Years', 'activityYearsPerSeiyuu')
+	jsonForOrderedGraphic(activityYears, 'Activity Years', 'popularityXactivityYears', popularities)
 
 	degree = dict(nx.degree(socialNetworkGraph))
-	outputJsonForGraphic(degree, 'Degree', 'degreePerSeiyuu')
-	outputJsonForGraphic(degree, 'Degree', 'popularityXdegree', popularities)
+	jsonForOrderedGraphic(degree, 'Degree', 'degreePerSeiyuu')
+	jsonForOrderedGraphic(degree, 'Degree', 'popularityXdegree', popularities)
 
 if __name__ == '__main__':
 	inputFileName = 'graphs/atLeast1Works_1960-1960.gexf'
