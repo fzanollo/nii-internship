@@ -36,7 +36,7 @@ def getSeiyuuList(fromYear, toYear):
 		}} group by ?seiyu_uri
 		""".format(fromYear, toYear))
 
-def getAnimegraphy(seiyuUri, fromYear, toYear):
+def getAnimegraphy(seiyuUri, fromYear, toYear, animeCollection):
 	animes = querySPARQLEndpoint("""
 		SELECT ?anime_uri ?start_year
 		WHERE {{
@@ -47,16 +47,21 @@ def getAnimegraphy(seiyuUri, fromYear, toYear):
 		}}
 		""".format(seiyuUri, fromYear))
 
-	works = Set()
+	works = {}
 	for item in animes:
-		works.add((item['anime_uri']['value'], item['start_year']['value']))
+		animeUri = item['anime_uri']['value']
+		startYear = item['start_year']['value']
+		popularity = animeCollection.find_one({"id":animeUri})['data']['favorites']
+
+		works[animeUri] = {'startYear': startYear, 'popularity': popularity}
 	
 	return works
 
 def makeGraph(seiyuuList, fromYear, toYear, requiredWorksInCommon):
 	client = MongoClient()
 	db = client.seiyuuData
-	seiyuuCompleteData = db.seiyuu
+	seiyuuCollection = db.seiyuu
+	animeCollection = db.anime
 
 	G = nx.Graph()
 	
@@ -65,16 +70,16 @@ def makeGraph(seiyuuList, fromYear, toYear, requiredWorksInCommon):
 	# NODES
 	for seiyuu in seiyuuList:
 		seiyuUri = seiyuu['seiyu_uri']['value']
-		seiyuuData = seiyuuCompleteData.find_one({"id":seiyuUri})
+		seiyuuData = seiyuuCollection.find_one({"id":seiyuUri})['data']
 		
 		name = seiyuu['seiyu_name']['value']
 		debut = seiyuu['debut']['value']
-		popularity = seiyuuData['data']['member_favorites']
-		works = getAnimegraphy(seiyuUri, fromYear, toYear)
+		popularity = seiyuuData['member_favorites']
+		works = getAnimegraphy(seiyuUri, fromYear, toYear, animeCollection)
 
-		seiyuuWorksDict[seiyuUri] = works
+		seiyuuWorksDict[seiyuUri] = Set(works.keys())
 
-		G.add_node(seiyuUri, label= name, popularity= popularity, debut= debut)
+		G.add_node(seiyuUri, label= name, popularity= popularity, debut= debut, works = works)
 
 	# EDGES
 	for seiyu1, works1 in seiyuuWorksDict.iteritems():
@@ -86,13 +91,13 @@ def makeGraph(seiyuuList, fromYear, toYear, requiredWorksInCommon):
 	return G
 
 def main(requiredWorksInCommon, fromYear, toYear):
-	seiyuuList = getSeiyuuList(startingYear, endingYear)
+	seiyuuList = getSeiyuuList(fromYear, toYear)
 	
 	# MAKE GRAPH
-	G = makeGraph(seiyuuList, startingYear, endingYear, requiredWorksInCommon)
+	G = makeGraph(seiyuuList, fromYear, toYear, requiredWorksInCommon)
 	
 	# SAVE IT
-	nx.write_gexf(G, "graphs/atLeast{0}Works_{1}-{2}.gexf".format(requiredWorksInCommon, startingYear, endingYear))
+	nx.write_gexf(G, "graphs/atLeast{0}Works_{1}-{2}_V2.gexf".format(requiredWorksInCommon, fromYear, toYear))
 	
 	
 if __name__ == '__main__':
