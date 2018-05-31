@@ -12,6 +12,12 @@ import seaborn as sns
 
 from SPARQLWrapper import SPARQLWrapper, JSON
 
+from pymongo import MongoClient
+
+client = MongoClient()
+db = client.seiyuuData
+animeCollection = db.anime
+
 def querySPARQLEndpoint(query):
 	sparql = SPARQLWrapper("http://localhost:8890/sparql")
 
@@ -22,6 +28,45 @@ def querySPARQLEndpoint(query):
 	bindings = yaml.load(json.dumps(results["results"]["bindings"]))
 
 	return bindings
+
+def getWorksStartingIn(seiyuUri, year):
+	return querySPARQLEndpoint("""
+		SELECT ?anime_uri
+		WHERE {{
+			?anime_uri wdt:P725 <{0}>.
+			
+			?anime_uri wdt:P580 ?start_year.
+			FILTER(?start_year >= {1})
+		}}
+		""".format(seiyuUri, year))
+
+def getAverageQltyOfWorksStartingIn(seiyuUri, year):
+	works = getWorksStartingIn(seiyuUri, year)
+
+	qualities = []
+	for work in works:
+		animeUri = work['anime_uri']['value']
+		animeData = animeCollection.find_one({"id":animeUri})
+		if 'data' in animeData:
+			qualities.append(animeData['data']['score'])
+
+	average = 0
+	if len(qualities)>0:
+		average = sum(qualities)/len(qualities)
+		
+	return average
+
+def getPopularityOfWorksStartingIn(seiyuUri, year):
+	works = getWorksStartingIn(seiyuUri, year)
+
+	popularityOfWorks = 0
+	for work in works:
+		animeUri = work['anime_uri']['value']
+		animeData = animeCollection.find_one({"id":animeUri})
+		if 'data' in animeData:
+			popularityOfWorks += animeData['data']['favorites']
+
+	return popularityOfWorks
 
 def getAmountOfWorksStartingIn(seiyuUri, year):
 	result = querySPARQLEndpoint("""
@@ -49,7 +94,7 @@ def plotHeatmap(correlations, filename):
 	plt.savefig('graphics/{0}.png'.format(filename), bbox_inches='tight', dpi=100)
 	plt.close()
 
-def plotScatterBetween(dataFrame, xName, yName, pearsonCorrelations, spearmanCorrelations):
+def plotScatterBetween(dataFrame, xName, yName, pearsonCorrelations, spearmanCorrelations, prefix):
 	pearsonCorrelation = round(pearsonCorrelations[xName][yName], 2)
 	spearmanCorrelation = round(spearmanCorrelations[xName][yName], 2)
 
@@ -87,22 +132,38 @@ def main(inputFileName):
 
 	popularities = nx.get_node_attributes(socialNetworkGraph, 'popularity')
 
+	#-------
 	amountOfWorks = {}
 	amountOfRecentWorks = {}
+	# popularityOfWorks = {}
+	# popularityOfRecentWorks = {}
+	averageQltyOfWorks = {}
+	averageQltyOfRecentWorks = {}
+
 	for seiyuUri in socialNetworkGraph.nodes():
 		amountOfWorks[seiyuUri] = getAmountOfWorks(seiyuUri)
-		amountOfRecentWorks[seiyuUri] = getAmountOfWorksStartingIn(seiyuUri, 2008)
+		amountOfRecentWorks[seiyuUri] = getAmountOfWorksStartingIn(seiyuUri, 2009)
+
+		# popularityOfWorks[seiyuUri] = getPopularityOfWorksStartingIn(seiyuUri, 1960)
+		# popularityOfRecentWorks[seiyuUri] = getPopularityOfWorksStartingIn(seiyuUri, 2009)
+
+		averageQltyOfWorks[seiyuUri] = getAverageQltyOfWorksStartingIn(seiyuUri, 1960)
+		averageQltyOfRecentWorks[seiyuUri] = getAverageQltyOfWorksStartingIn(seiyuUri, 2009)
 
 	# correlations
 	columnDataDict = {
-		'degree': degree, 
-		'betweenness': btwC, 
-		'closeness': closeness,
-		'eigenvector': eigenvector,
-		'activityYears': activityYears,
+		# 'degree': degree, 
+		# 'betweenness': btwC, 
+		# 'closeness': closeness,
+		# 'eigenvector': eigenvector,
+		# 'activityYears': activityYears,
 		'popularity': popularities,
 		'amountOfWorks': amountOfWorks,
-		'amountOfRecentWorks': amountOfRecentWorks
+		'amountOfRecentWorks(last9years)': amountOfRecentWorks,
+		# 'popularityOfWorks': popularityOfWorks,
+		# 'popularityOfRecentWorks': popularityOfRecentWorks
+		'averageQltyOfWorks': averageQltyOfWorks,
+		'averageQltyOfRecentWorks': averageQltyOfRecentWorks
 	}
 
 	df = pd.DataFrame(columnDataDict)
@@ -112,9 +173,9 @@ def main(inputFileName):
 	spearmanCorr = df.corr('spearman')
 	kendallCorr = df.corr('kendall')
 
-	plotHeatmap(pearsonCorr, prefix + 'correlation_Pearson')
-	plotHeatmap(spearmanCorr, prefix + 'correlation_Spearman')
-	plotHeatmap(kendallCorr, prefix + 'correlation_Kendall')
+	# plotHeatmap(pearsonCorr, prefix + 'correlation_Pearson')
+	# plotHeatmap(spearmanCorr, prefix + 'correlation_Spearman')
+	# plotHeatmap(kendallCorr, prefix + 'correlation_Kendall')
 
 	# plotScatterBetween(df, 'amountOfWorks', 'betweenness', pearsonCorr, spearmanCorr, prefix)
 	# plotScatterBetween(df, 'amountOfWorks', 'closeness', pearsonCorr, spearmanCorr, prefix)
@@ -124,7 +185,10 @@ def main(inputFileName):
 	# plotScatterBetween(df, 'amountOfWorks', 'activityYears', pearsonCorr, spearmanCorr, prefix)
 	# plotScatterBetween(df, 'degree', 'activityYears', pearsonCorr, spearmanCorr, prefix)
 	# plotScatterBetween(df, 'degree', 'popularity', pearsonCorr, spearmanCorr, prefix)
-	# plotScatterBetween(df, 'amountOfRecentWorks', 'popularity', pearsonCorr, spearmanCorr, prefix)
+	# plotScatterBetween(df, 'popularity', 'popularityOfWorks', pearsonCorr, spearmanCorr, prefix)
+	# plotScatterBetween(df, 'popularity', 'popularityOfRecentWorks', pearsonCorr, spearmanCorr, prefix)
+	plotScatterBetween(df, 'popularity', 'averageQltyOfWorks', pearsonCorr, spearmanCorr, prefix)
+	plotScatterBetween(df, 'popularity', 'averageQltyOfRecentWorks', pearsonCorr, spearmanCorr, prefix)
 	
 
 if __name__ == '__main__':
