@@ -41,12 +41,12 @@ def main(inputFileName, outputFileName):
 
 		# seiyu_uri wdt:mal_id mal_id
 		if 'MAL_ID' in seiyuu:
-			outputFile.write(u'<{0}> {1} <{2}> .\n'.format(seiyuuUri, "wdt:P4084", 'https://api.jikan.me/person/' + str(seiyuu['MAL_ID']['value'])))
+			outputFile.write(u'<{0}> {1} <{2}> .\n'.format(seiyuuUri, "wdt:P4084", 'https://api.jikan.moe/person/' + str(seiyuu['MAL_ID']['value'])))
 
 		if seiyuuData != None:
 			if 'voice_acting_role' in seiyuuData['data']:
 				for work in seiyuuData['data']['voice_acting_role']:
-					animeURI = 'https://api.jikan.me/anime/' + str(work['anime']['mal_id'])
+					animeURI = 'https://api.jikan.moe/anime/' + str(work['anime']['mal_id'])
 					# anime_uri wdt:voice_actor seiyu_uri
 					outputFile.write(u'<{0}> {1} <{2}> .\n'.format(animeURI, "wdt:P725", seiyuuUri))
 

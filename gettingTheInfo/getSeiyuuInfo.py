@@ -21,7 +21,7 @@ def consultAPI(query):
 def recoverMalId(seiyuu):
 	name, surname = getNameAndSurname(seiyuu)
 
-	baseURL = "https://api.jikan.me/search/people/"
+	baseURL = "https://api.jikan.moe/search/people/"
 	currentPage = 1
 
 	response = consultAPI(baseURL + surname + '/' + str(currentPage))
@@ -71,7 +71,7 @@ def getSeiyuuInfo(seiyuu):
 		seiyuu['MAL_ID'] = {"type": "literal", "value": malId}
 
 	if seiyuu['MAL_ID']['value'] != -1:
-		baseURL = 'https://api.jikan.me/person/'
+		baseURL = 'https://api.jikan.moe/person/'
 		malId = seiyuu['MAL_ID']['value']
 
 		response = consultAPI(baseURL + str(malId) + '/')
