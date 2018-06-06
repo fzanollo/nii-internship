@@ -62,7 +62,7 @@ def addNewNodes(G, seiyuuWorksDict, currentYear):
 		seiyuuData = seiyuuCompleteData.find_one({"id":seiyuUri})
 		
 		name = seiyuu['seiyu_name']['value']
-		popularity = seiyuuData['data']['member_favorites']
+		popularity = seiyuuData['member_favorites']
 		debut = seiyuu['debut']['value']
 
 		G.add_node(seiyuUri, label= name, popularity= popularity, debut= debut)

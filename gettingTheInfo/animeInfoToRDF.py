@@ -33,18 +33,18 @@ def getStartAndEndingYearFromAiredString(airedString):
 	return startYear, endYear
 
 def getStartAndEndingYear(animeData):
-	startYear = animeData['data']['aired']['from']
-	endYear = animeData['data']['aired']['to']
+	startYear = animeData['aired']['from']
+	endYear = animeData['aired']['to']
 
 	if startYear == None:
-		startYear, end = getStartAndEndingYearFromAiredString(animeData['data']['aired_string'])
+		startYear, end = getStartAndEndingYearFromAiredString(animeData['aired_string'])
 	else:
-		startYear = int(animeData['data']['aired']['from'][:4])
+		startYear = int(animeData['aired']['from'][:4])
 
 	if endYear == None:
-		start, endYear = getStartAndEndingYearFromAiredString(animeData['data']['aired_string'])
+		start, endYear = getStartAndEndingYearFromAiredString(animeData['aired_string'])
 	else:
-		endYear = int(animeData['data']['aired']['to'][:4])
+		endYear = int(animeData['aired']['to'][:4])
 
 	return startYear, endYear
 

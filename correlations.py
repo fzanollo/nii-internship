@@ -135,8 +135,8 @@ def main(inputFileName):
 	#-------
 	amountOfWorks = {}
 	amountOfRecentWorks = {}
-	# popularityOfWorks = {}
-	# popularityOfRecentWorks = {}
+	popularityOfWorks = {}
+	popularityOfRecentWorks = {}
 	averageQltyOfWorks = {}
 	averageQltyOfRecentWorks = {}
 
@@ -144,24 +144,24 @@ def main(inputFileName):
 		amountOfWorks[seiyuUri] = getAmountOfWorks(seiyuUri)
 		amountOfRecentWorks[seiyuUri] = getAmountOfWorksStartingIn(seiyuUri, 2009)
 
-		# popularityOfWorks[seiyuUri] = getPopularityOfWorksStartingIn(seiyuUri, 1960)
-		# popularityOfRecentWorks[seiyuUri] = getPopularityOfWorksStartingIn(seiyuUri, 2009)
+		popularityOfWorks[seiyuUri] = getPopularityOfWorksStartingIn(seiyuUri, 1960)
+		popularityOfRecentWorks[seiyuUri] = getPopularityOfWorksStartingIn(seiyuUri, 2009)
 
 		averageQltyOfWorks[seiyuUri] = getAverageQltyOfWorksStartingIn(seiyuUri, 1960)
 		averageQltyOfRecentWorks[seiyuUri] = getAverageQltyOfWorksStartingIn(seiyuUri, 2009)
 
 	# correlations
 	columnDataDict = {
-		# 'degree': degree, 
-		# 'betweenness': btwC, 
-		# 'closeness': closeness,
-		# 'eigenvector': eigenvector,
-		# 'activityYears': activityYears,
+		'degree': degree, 
+		'betweenness': btwC, 
+		'closeness': closeness,
+		'eigenvector': eigenvector,
+		'activityYears': activityYears,
 		'popularity': popularities,
 		'amountOfWorks': amountOfWorks,
 		'amountOfRecentWorks(last9years)': amountOfRecentWorks,
-		# 'popularityOfWorks': popularityOfWorks,
-		# 'popularityOfRecentWorks': popularityOfRecentWorks
+		'popularityOfWorks': popularityOfWorks,
+		'popularityOfRecentWorks': popularityOfRecentWorks
 		'averageQltyOfWorks': averageQltyOfWorks,
 		'averageQltyOfRecentWorks': averageQltyOfRecentWorks
 	}
@@ -169,26 +169,17 @@ def main(inputFileName):
 	df = pd.DataFrame(columnDataDict)
 
 	# Spearman, Pearson, Kendall
-	pearsonCorr = df.corr('pearson')
-	spearmanCorr = df.corr('spearman')
-	kendallCorr = df.corr('kendall')
+	# pearsonCorr = df.corr('pearson')
+	# spearmanCorr = df.corr('spearman')
+	# kendallCorr = df.corr('kendall')
 
 	# plotHeatmap(pearsonCorr, prefix + 'correlation_Pearson')
 	# plotHeatmap(spearmanCorr, prefix + 'correlation_Spearman')
 	# plotHeatmap(kendallCorr, prefix + 'correlation_Kendall')
 
 	# plotScatterBetween(df, 'amountOfWorks', 'betweenness', pearsonCorr, spearmanCorr, prefix)
-	# plotScatterBetween(df, 'amountOfWorks', 'closeness', pearsonCorr, spearmanCorr, prefix)
-	# plotScatterBetween(df, 'amountOfWorks', 'popularity', pearsonCorr, spearmanCorr, prefix)
-	# plotScatterBetween(df, 'eigenvector', 'activityYears', pearsonCorr, spearmanCorr, prefix)
-	# plotScatterBetween(df, 'popularity', 'activityYears', pearsonCorr, spearmanCorr, prefix)
-	# plotScatterBetween(df, 'amountOfWorks', 'activityYears', pearsonCorr, spearmanCorr, prefix)
-	# plotScatterBetween(df, 'degree', 'activityYears', pearsonCorr, spearmanCorr, prefix)
-	# plotScatterBetween(df, 'degree', 'popularity', pearsonCorr, spearmanCorr, prefix)
-	# plotScatterBetween(df, 'popularity', 'popularityOfWorks', pearsonCorr, spearmanCorr, prefix)
-	# plotScatterBetween(df, 'popularity', 'popularityOfRecentWorks', pearsonCorr, spearmanCorr, prefix)
-	plotScatterBetween(df, 'popularity', 'averageQltyOfWorks', pearsonCorr, spearmanCorr, prefix)
-	plotScatterBetween(df, 'popularity', 'averageQltyOfRecentWorks', pearsonCorr, spearmanCorr, prefix)
+
+	
 	
 
 if __name__ == '__main__':

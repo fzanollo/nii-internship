@@ -51,7 +51,7 @@ def getAnimegraphy(seiyuUri, fromYear, toYear, animeCollection):
 	for item in animes:
 		animeUri = item['anime_uri']['value']
 		startYear = item['start_year']['value']
-		popularity = animeCollection.find_one({"id":animeUri})['data']['favorites']
+		popularity = animeCollection.find_one({"id":animeUri})['favorites']
 
 		works[animeUri] = {'startYear': startYear, 'popularity': popularity}
 	
@@ -70,7 +70,7 @@ def makeGraph(seiyuuList, fromYear, toYear, requiredWorksInCommon):
 	# NODES
 	for seiyuu in seiyuuList:
 		seiyuUri = seiyuu['seiyu_uri']['value']
-		seiyuuData = seiyuuCollection.find_one({"id":seiyuUri})['data']
+		seiyuuData = seiyuuCollection.find_one({"id":seiyuUri})
 		
 		name = seiyuu['seiyu_name']['value']
 		debut = seiyuu['debut']['value']
