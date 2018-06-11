@@ -37,7 +37,7 @@ def getSeiyuusWithDebutIn(year):
 		}} group by ?seiyu_uri
 		""".format(year))
 
-def getAnimegraphyStartingIn(seiyuUri, year):
+def getAnimegraphyStartingIn(seiyuuUri, year):
 	animes = querySPARQLEndpoint("""
 		SELECT ?anime_uri ?start_year
 		WHERE {{
@@ -46,7 +46,7 @@ def getAnimegraphyStartingIn(seiyuUri, year):
 			?anime_uri wdt:P580 ?start_year.
 			FILTER(?start_year >= {1})
 		}}
-		""".format(seiyuUri, year))
+		""".format(seiyuuUri, year))
 
 	works = Set()
 	for item in animes:
@@ -58,21 +58,21 @@ def addNewNodes(G, seiyuuWorksDict, currentYear):
 	seiyuuList = getSeiyuusWithDebutIn(currentYear)
 
 	for seiyuu in seiyuuList:
-		seiyuUri = seiyuu['seiyu_uri']['value']
-		seiyuuData = seiyuuCompleteData.find_one({"id":seiyuUri})
+		seiyuuUri = seiyuu['seiyu_uri']['value']
+		seiyuuData = seiyuuCompleteData.find_one({"id":seiyuuUri})
 		
 		name = seiyuu['seiyu_name']['value']
 		popularity = seiyuuData['member_favorites']
 		debut = seiyuu['debut']['value']
 
-		G.add_node(seiyuUri, label= name, popularity= popularity, debut= debut)
+		G.add_node(seiyuuUri, label= name, popularity= popularity, debut= debut)
 
 		# Add new works
-		works = getAnimegraphyStartingIn(seiyuUri, currentYear)
-		if seiyuUri not in seiyuuWorksDict:
-			seiyuuWorksDict[seiyuUri] = set()
+		works = getAnimegraphyStartingIn(seiyuuUri, currentYear)
+		if seiyuuUri not in seiyuuWorksDict:
+			seiyuuWorksDict[seiyuuUri] = set()
 
-		seiyuuWorksDict[seiyuUri].update(works)
+		seiyuuWorksDict[seiyuuUri].update(works)
 
 def addNewEdges(G, seiyuuWorksDict, currentYear): 
 	for seiyu1 in G.nodes():

@@ -36,7 +36,7 @@ def getSeiyuuList(fromYear, toYear):
 		}} group by ?seiyu_uri
 		""".format(fromYear, toYear))
 
-def getAnimegraphy(seiyuUri, fromYear, toYear, animeCollection):
+def getAnimegraphy(seiyuuUri, fromYear, toYear, animeCollection):
 	animes = querySPARQLEndpoint("""
 		SELECT ?anime_uri ?start_year
 		WHERE {{
@@ -45,7 +45,7 @@ def getAnimegraphy(seiyuUri, fromYear, toYear, animeCollection):
 			?anime_uri wdt:P580 ?start_year.
 			FILTER(?start_year >= {1})
 		}}
-		""".format(seiyuUri, fromYear))
+		""".format(seiyuuUri, fromYear))
 
 	works = {}
 	for item in animes:
@@ -69,17 +69,17 @@ def makeGraph(seiyuuList, fromYear, toYear, requiredWorksInCommon):
 
 	# NODES
 	for seiyuu in seiyuuList:
-		seiyuUri = seiyuu['seiyu_uri']['value']
-		seiyuuData = seiyuuCollection.find_one({"id":seiyuUri})
+		seiyuuUri = seiyuu['seiyu_uri']['value']
+		seiyuuData = seiyuuCollection.find_one({"id":seiyuuUri})
 		
 		name = seiyuu['seiyu_name']['value']
 		debut = seiyuu['debut']['value']
 		popularity = seiyuuData['member_favorites']
-		works = getAnimegraphy(seiyuUri, fromYear, toYear, animeCollection)
+		works = getAnimegraphy(seiyuuUri, fromYear, toYear, animeCollection)
 
-		seiyuuWorksDict[seiyuUri] = Set(works.keys())
+		seiyuuWorksDict[seiyuuUri] = Set(works.keys())
 
-		G.add_node(seiyuUri, label= name, popularity= popularity, debut= debut, works = works)
+		G.add_node(seiyuuUri, label= name, popularity= popularity, debut= debut, works = works)
 
 	# EDGES
 	for seiyu1, works1 in seiyuuWorksDict.iteritems():

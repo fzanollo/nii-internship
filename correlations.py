@@ -29,7 +29,7 @@ def querySPARQLEndpoint(query):
 
 	return bindings
 
-def getWorksStartingIn(seiyuUri, year):
+def getWorksStartingIn(seiyuuUri, year):
 	return querySPARQLEndpoint("""
 		SELECT ?anime_uri
 		WHERE {{
@@ -38,10 +38,10 @@ def getWorksStartingIn(seiyuUri, year):
 			?anime_uri wdt:P580 ?start_year.
 			FILTER(?start_year >= {1})
 		}}
-		""".format(seiyuUri, year))
+		""".format(seiyuuUri, year))
 
-def getAverageQltyOfWorksStartingIn(seiyuUri, year):
-	works = getWorksStartingIn(seiyuUri, year)
+def getAverageQltyOfWorksStartingIn(seiyuuUri, year):
+	works = getWorksStartingIn(seiyuuUri, year)
 
 	qualities = []
 	for work in works:
@@ -56,8 +56,8 @@ def getAverageQltyOfWorksStartingIn(seiyuUri, year):
 		
 	return average
 
-def getPopularityOfWorksStartingIn(seiyuUri, year):
-	works = getWorksStartingIn(seiyuUri, year)
+def getPopularityOfWorksStartingIn(seiyuuUri, year):
+	works = getWorksStartingIn(seiyuuUri, year)
 
 	popularityOfWorks = 0
 	for work in works:
@@ -68,7 +68,7 @@ def getPopularityOfWorksStartingIn(seiyuUri, year):
 
 	return popularityOfWorks
 
-def getAmountOfWorksStartingIn(seiyuUri, year):
+def getAmountOfWorksStartingIn(seiyuuUri, year):
 	result = querySPARQLEndpoint("""
 		SELECT count(?anime_uri)
 		WHERE {{
@@ -77,12 +77,12 @@ def getAmountOfWorksStartingIn(seiyuUri, year):
 			?anime_uri wdt:P580 ?start_year.
 			FILTER(?start_year >= {1})
 		}}
-		""".format(seiyuUri, year))
+		""".format(seiyuuUri, year))
 
 	return int(result[0]['callret-0']['value'])
 
-def getAmountOfWorks(seiyuUri):
-	return getAmountOfWorksStartingIn(seiyuUri, 1960)
+def getAmountOfWorks(seiyuuUri):
+	return getAmountOfWorksStartingIn(seiyuuUri, 1960)
 
 def plotHeatmap(correlations, filename):
 	# plot heatmap
@@ -140,15 +140,15 @@ def main(inputFileName):
 	averageQltyOfWorks = {}
 	averageQltyOfRecentWorks = {}
 
-	for seiyuUri in socialNetworkGraph.nodes():
-		amountOfWorks[seiyuUri] = getAmountOfWorks(seiyuUri)
-		amountOfRecentWorks[seiyuUri] = getAmountOfWorksStartingIn(seiyuUri, 2009)
+	for seiyuuUri in socialNetworkGraph.nodes():
+		amountOfWorks[seiyuuUri] = getAmountOfWorks(seiyuuUri)
+		amountOfRecentWorks[seiyuuUri] = getAmountOfWorksStartingIn(seiyuuUri, 2009)
 
-		popularityOfWorks[seiyuUri] = getPopularityOfWorksStartingIn(seiyuUri, 1960)
-		popularityOfRecentWorks[seiyuUri] = getPopularityOfWorksStartingIn(seiyuUri, 2009)
+		popularityOfWorks[seiyuuUri] = getPopularityOfWorksStartingIn(seiyuuUri, 1960)
+		popularityOfRecentWorks[seiyuuUri] = getPopularityOfWorksStartingIn(seiyuuUri, 2009)
 
-		averageQltyOfWorks[seiyuUri] = getAverageQltyOfWorksStartingIn(seiyuUri, 1960)
-		averageQltyOfRecentWorks[seiyuUri] = getAverageQltyOfWorksStartingIn(seiyuUri, 2009)
+		averageQltyOfWorks[seiyuuUri] = getAverageQltyOfWorksStartingIn(seiyuuUri, 1960)
+		averageQltyOfRecentWorks[seiyuuUri] = getAverageQltyOfWorksStartingIn(seiyuuUri, 2009)
 
 	# correlations
 	columnDataDict = {

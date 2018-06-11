@@ -20,13 +20,13 @@ def querySPARQLEndpoint(query):
 
 	return bindings
 
-def getAnimegraphy(seiyuUri):
+def getAnimegraphy(seiyuuUri):
 	animes = querySPARQLEndpoint("""
 		SELECT ?anime_uri
 		WHERE {{
 			?anime_uri wdt:P725 <{0}>.
 		}}
-		""".format(seiyuUri))
+		""".format(seiyuuUri))
 
 	works = Set()
 	for item in animes:
