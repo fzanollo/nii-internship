@@ -11,7 +11,8 @@ import networkx as nx
 
 client = MongoClient()
 db = client.seiyuuData
-seiyuuCompleteData = db.seiyuu
+seiyuuCollection = db.seiyuu
+animeCollection = db.anime
 
 def querySPARQLEndpoint(query):
 	sparql = SPARQLWrapper("http://localhost:8890/sparql")
@@ -26,15 +27,18 @@ def querySPARQLEndpoint(query):
 
 def getSeiyuusWithDebutIn(year):
 	return querySPARQLEndpoint("""
-		SELECT ?seiyu_uri ?seiyu_name ?debut
+		SELECT ?seiyuu_uri ?seiyuu_name ?debut ?gender ?birthday ?birthplace
 		WHERE {{
-			?seiyu_uri wdt:P106 wd:Q622807.
-			?seiyu_uri rdfs:label ?seiyu_name.
-			?anime_uri wdt:P725 ?seiyu_uri.
-			?seiyu_uri wdt:P2031 ?debut.
+			?seiyuu_uri wdt:P106 wd:Q622807.
+			?seiyuu_uri rdfs:label ?seiyuu_name.			
+			?seiyuu_uri wdt:P2031 ?debut.
+			?seiyuu_uri wdt:P21 ?gender.
+
+			optional{{?seiyuu_uri wdt:P569 ?birthday.}}
+			optional{{?seiyuu_uri wdt:P19 ?birthplace.}}
 
 			filter(?debut = {0})
-		}} group by ?seiyu_uri
+		}} group by ?seiyuu_uri
 		""".format(year))
 
 def getAnimegraphyStartingIn(seiyuuUri, year):
@@ -48,47 +52,81 @@ def getAnimegraphyStartingIn(seiyuuUri, year):
 		}}
 		""".format(seiyuuUri, year))
 
-	works = Set()
+	works = {}
 	for item in animes:
-		works.add((item['anime_uri']['value'], item['start_year']['value']))
+		animeUri = item['anime_uri']['value']
+		animeData = animeCollection.find_one({"id":animeUri})
+
+		startYear = item['start_year']['value']
+		favorites = animeData['favorites']
+		score = animeData['score']
+		popularity = animeData['popularity']
+
+		genres = []
+		for genre in animeData['genre']:
+			genres.append(genre['name'])
+
+		works[animeUri] = {
+			'startYear': startYear, 
+			'favorites': favorites, 
+			'score': score, 
+			'popularity': popularity, 
+			'genres': genres
+		}
 	
 	return works
 
-def addNewNodes(G, seiyuuWorksDict, currentYear):
+def addNewNodes(G, seiyuusOldWorks, currentYear):
 	seiyuuList = getSeiyuusWithDebutIn(currentYear)
 
 	for seiyuu in seiyuuList:
-		seiyuuUri = seiyuu['seiyu_uri']['value']
-		seiyuuData = seiyuuCompleteData.find_one({"id":seiyuuUri})
+		seiyuuUri = seiyuu['seiyuu_uri']['value']
+		seiyuuData = seiyuuCollection.find_one({"id":seiyuuUri})
 		
-		name = seiyuu['seiyu_name']['value']
-		popularity = seiyuuData['member_favorites']
+		name = seiyuu['seiyuu_name']['value']
 		debut = seiyuu['debut']['value']
+		gender = seiyuu['gender']['value']
 
-		G.add_node(seiyuuUri, label= name, popularity= popularity, debut= debut)
+		birthday = birthplace = 'Null'
+		if 'birthday' in seiyuu:
+			birthday = seiyuu['birthday']['value']
+
+		if 'birthplace' in seiyuu:
+			birthplace = seiyuu['birthplace']['value']
+
+		popularity = seiyuuData['member_favorites']
 
 		# Add new works
-		works = getAnimegraphyStartingIn(seiyuuUri, currentYear)
-		if seiyuuUri not in seiyuuWorksDict:
-			seiyuuWorksDict[seiyuuUri] = set()
+		newWorks = getAnimegraphyStartingIn(seiyuuUri, currentYear)
+		if seiyuuUri not in seiyuusOldWorks:
+			seiyuusOldWorks[seiyuuUri] = {}
 
-		seiyuuWorksDict[seiyuuUri].update(works)
+		seiyuusOldWorks[seiyuuUri].update(newWorks)
 
-def addNewEdges(G, seiyuuWorksDict, currentYear): 
+		G.add_node(seiyuuUri, 
+			label = name, 
+			debut = debut,
+			gender = gender,
+			birthday = birthday,
+			birthplace = birthplace,
+			popularity = popularity, 
+			works = seiyuusOldWorks[seiyuuUri])
+
+def addNewEdges(G, seiyuusOldWorks, currentYear): 
 	for seiyu1 in G.nodes():
-		works1 = seiyuuWorksDict[seiyu1]
+		works1 = Set(seiyuusOldWorks[seiyu1].keys())
 		
 		for seiyu2 in G.nodes():
-			works2 = seiyuuWorksDict[seiyu2]
+			works2 = Set(seiyuusOldWorks[seiyu2].keys())
 			
 			if not G.has_edge(seiyu1, seiyu2):
 				worksInCommon = works1.intersection(works2)
 				if seiyu1 < seiyu2 and len(worksInCommon) >= requiredWorksInCommon:
 					G.add_edge(seiyu1, seiyu2)
 
-def addNewNodesAndEdges(socialNetworkGraph, seiyuuWorksDict, currentYear):
-	addNewNodes(socialNetworkGraph, seiyuuWorksDict, currentYear)
-	addNewEdges(socialNetworkGraph, seiyuuWorksDict, currentYear)
+def addNewNodesAndEdges(socialNetworkGraph, seiyuusOldWorks, currentYear):
+	addNewNodes(socialNetworkGraph, seiyuusOldWorks, currentYear)
+	addNewEdges(socialNetworkGraph, seiyuusOldWorks, currentYear)
 
 def main(requiredWorksInCommon, fromYear, toYear):
 	xs = xrange(fromYear, toYear+1)
@@ -96,13 +134,13 @@ def main(requiredWorksInCommon, fromYear, toYear):
 	edgesY = []
 
 	socialNetworkGraph = nx.Graph()
-	seiyuuWorksDict = {}
+	seiyuusOldWorks = {}
 	
 	startingYear = fromYear
 	for currentYear in xrange(fromYear, toYear+1):
 		print('working on {0}-{1}'.format(startingYear, currentYear))
 
-		addNewNodesAndEdges(socialNetworkGraph, seiyuuWorksDict, currentYear)
+		addNewNodesAndEdges(socialNetworkGraph, seiyuusOldWorks, currentYear)
 
 		# SAVE IT
 		nx.write_gexf(socialNetworkGraph, "graphs/atLeast{0}Works_{1}-{2}.gexf".format(requiredWorksInCommon, startingYear, currentYear))
@@ -111,31 +149,31 @@ def main(requiredWorksInCommon, fromYear, toYear):
 		nodesY.append(nx.number_of_nodes(socialNetworkGraph))
 		edgesY.append(nx.number_of_edges(socialNetworkGraph))
 
-	xs = range(1960, 2019)
+	# xs = range(1960, 2019)
 
-	nodeFilename = 'accumulationNodes_{0}_{1}-{2}'.format(requiredWorksInCommon, fromYear, toYear)
-	with open('aux/{0}.json'.format(nodeFilename), 'w') as nodesOutputFile:
-		nodesOutputFile.write(json.dumps({
-		'xs': xs, 
-		'ys': nodesY, 
-		'color': 'r', 
-		'xlabel': 'Years', 
-		'ylabel': 'Number of nodes', 
-		'title': 'Accumulation of nodes over time, with at least {0} works in common'.format(requiredWorksInCommon), 
-		'outputFileName': nodeFilename
-	}))
+	# nodeFilename = 'accumulationNodes_{0}_{1}-{2}'.format(requiredWorksInCommon, fromYear, toYear)
+	# with open('aux/{0}.json'.format(nodeFilename), 'w') as nodesOutputFile:
+	# 	nodesOutputFile.write(json.dumps({
+	# 	'xs': xs, 
+	# 	'ys': nodesY, 
+	# 	'color': 'r', 
+	# 	'xlabel': 'Years', 
+	# 	'ylabel': 'Number of nodes', 
+	# 	'title': 'Accumulation of nodes over time, with at least {0} works in common'.format(requiredWorksInCommon), 
+	# 	'outputFileName': nodeFilename
+	# }))
 	
-	edgesFilename = 'accumulationEdges_{0}_{1}-{2}.json'.format(requiredWorksInCommon, fromYear, toYear)
-	with open('aux/{0}.json'.format(edgesFilename), 'w') as edgesOutputFile:
-		edgesOutputFile.write(json.dumps({
-		'xs': xs, 
-		'ys': edgesY, 
-		'color': 'b', 
-		'xlabel': 'Years', 
-		'ylabel': 'Number of edges', 
-		'title': 'Accumulation of edges over time, with at least {0} works in common'.format(requiredWorksInCommon), 
-		'outputFileName': edgesFilename
-	}))
+	# edgesFilename = 'accumulationEdges_{0}_{1}-{2}.json'.format(requiredWorksInCommon, fromYear, toYear)
+	# with open('aux/{0}.json'.format(edgesFilename), 'w') as edgesOutputFile:
+	# 	edgesOutputFile.write(json.dumps({
+	# 	'xs': xs, 
+	# 	'ys': edgesY, 
+	# 	'color': 'b', 
+	# 	'xlabel': 'Years', 
+	# 	'ylabel': 'Number of edges', 
+	# 	'title': 'Accumulation of edges over time, with at least {0} works in common'.format(requiredWorksInCommon), 
+	# 	'outputFileName': edgesFilename
+	# }))
 
 if __name__ == '__main__':
 	requiredWorksInCommon = 1

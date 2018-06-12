@@ -25,15 +25,18 @@ def querySPARQLEndpoint(query):
 
 def getSeiyuuList(fromYear, toYear):
 	return querySPARQLEndpoint("""
-		SELECT ?seiyu_uri ?seiyu_name ?debut
+		SELECT ?seiyuu_uri ?seiyuu_name ?debut ?gender ?birthday ?birthplace
 		WHERE {{
-			?seiyu_uri wdt:P106 wd:Q622807.
-			?seiyu_uri rdfs:label ?seiyu_name.
-			?anime_uri wdt:P725 ?seiyu_uri.
-			?seiyu_uri wdt:P2031 ?debut.
+			?seiyuu_uri wdt:P106 wd:Q622807.
+			?seiyuu_uri rdfs:label ?seiyuu_name.			
+			?seiyuu_uri wdt:P2031 ?debut.
+			?seiyuu_uri wdt:P21 ?gender.
+
+			optional{{?seiyuu_uri wdt:P569 ?birthday.}}
+			optional{{?seiyuu_uri wdt:P19 ?birthplace.}}
 
 			filter(?debut >= {0} && ?debut <= {1})
-		}} group by ?seiyu_uri
+		}} group by ?seiyuu_uri
 		""".format(fromYear, toYear))
 
 def getAnimegraphy(seiyuuUri, fromYear, toYear, animeCollection):
@@ -50,10 +53,24 @@ def getAnimegraphy(seiyuuUri, fromYear, toYear, animeCollection):
 	works = {}
 	for item in animes:
 		animeUri = item['anime_uri']['value']
-		startYear = item['start_year']['value']
-		popularity = animeCollection.find_one({"id":animeUri})['favorites']
+		animeData = animeCollection.find_one({"id":animeUri})
 
-		works[animeUri] = {'startYear': startYear, 'popularity': popularity}
+		startYear = item['start_year']['value']
+		favorites = animeData['favorites']
+		score = animeData['score']
+		popularity = animeData['popularity']
+
+		genres = []
+		for genre in animeData['genre']:
+			genres.append(genre['name'])
+
+		works[animeUri] = {
+			'startYear': startYear, 
+			'favorites': favorites, 
+			'score': score, 
+			'popularity': popularity, 
+			'genres': genres
+		}
 	
 	return works
 
@@ -69,17 +86,33 @@ def makeGraph(seiyuuList, fromYear, toYear, requiredWorksInCommon):
 
 	# NODES
 	for seiyuu in seiyuuList:
-		seiyuuUri = seiyuu['seiyu_uri']['value']
+		seiyuuUri = seiyuu['seiyuu_uri']['value']
 		seiyuuData = seiyuuCollection.find_one({"id":seiyuuUri})
 		
-		name = seiyuu['seiyu_name']['value']
+		name = seiyuu['seiyuu_name']['value']
 		debut = seiyuu['debut']['value']
+		gender = seiyuu['gender']['value']
+
+		birthday = birthplace = 'Null'
+		if 'birthday' in seiyuu:
+			birthday = seiyuu['birthday']['value']
+
+		if 'birthplace' in seiyuu:
+			birthplace = seiyuu['birthplace']['value']
+
 		popularity = seiyuuData['member_favorites']
 		works = getAnimegraphy(seiyuuUri, fromYear, toYear, animeCollection)
 
 		seiyuuWorksDict[seiyuuUri] = Set(works.keys())
 
-		G.add_node(seiyuuUri, label= name, popularity= popularity, debut= debut, works = works)
+		G.add_node(seiyuuUri, 
+			label = name, 
+			debut = debut,
+			gender = gender,
+			birthday = birthday,
+			birthplace = birthplace,
+			popularity = popularity, 
+			works = works)
 
 	# EDGES
 	for seiyu1, works1 in seiyuuWorksDict.iteritems():
@@ -97,7 +130,7 @@ def main(requiredWorksInCommon, fromYear, toYear):
 	G = makeGraph(seiyuuList, fromYear, toYear, requiredWorksInCommon)
 	
 	# SAVE IT
-	nx.write_gexf(G, "graphs/atLeast{0}Works_{1}-{2}_V2.gexf".format(requiredWorksInCommon, fromYear, toYear))
+	nx.write_gexf(G, "graphs/atLeast{0}Works_{1}-{2}.gexf".format(requiredWorksInCommon, fromYear, toYear))
 	
 	
 if __name__ == '__main__':
