@@ -1,5 +1,6 @@
 import sys
-import re
+from datetime import date
+from itertools import combinations
 
 import yaml
 import json
@@ -8,10 +9,20 @@ import networkx as nx
 import pandas as pd
 import numpy as np
 
-from sklearn.model_selection import train_test_split
+# ---
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+# ---
+
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split, KFold, cross_val_score
 from sklearn import metrics
+
 from sklearn.externals.six import StringIO  
 from IPython.display import Image  
 from sklearn.tree import export_graphviz
@@ -82,46 +93,72 @@ def amountOfWorksForStartingIn(seiyuuUri, year):
 def amountOfWorksFor(seiyuuUri):
 	return amountOfWorksForStartingIn(seiyuuUri, 1960)
 
-def main(inputFileName):
-	prefix = re.search(r"\d+", inputFileName).group() + 'Works_'
-	socialNetworkGraph = nx.read_gexf(inputFileName)
+def plotPredictions(measured, predicted, filename, boundaries=None):
+	if boundaries == None:
+		boundaries = [measured.min(), measured.max()]
 
-	# inside info
-	degree = dict(nx.degree(socialNetworkGraph))
-	
-	btwC = nx.betweenness_centrality(socialNetworkGraph)
+	fig, ax = plt.subplots()
+	ax.scatter(measured, predicted, edgecolors=(0, 0, 0))
+	ax.plot(boundaries, boundaries, 'k--', lw=4)
+	ax.set_xlabel('Measured')
+	ax.set_ylabel('Predicted')
 
-	closeness = nx.closeness_centrality(socialNetworkGraph)
+	plt.savefig('graphics/{0}.png'.format(filename), bbox_inches='tight', dpi=100)
+	# plt.show()
+	plt.close()
 
-	eigenvector = nx.eigenvector_centrality(socialNetworkGraph)
+def plotTree(model, data, filename):
+	dot_data = StringIO()
 
-	# outside info
+	export_graphviz(model, out_file=dot_data,  
+	                filled=True, rounded=True,
+	                special_characters=True, feature_names=data.columns.values.tolist())
+
+	graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  
+	graph.write_png('graphics/{0}.png'.format(filename))
+
+def preparePersonalData(socialNetworkGraph):
 	debuts = nx.get_node_attributes(socialNetworkGraph, 'debut')
+	genders = nx.get_node_attributes(socialNetworkGraph, 'gender')
 	activityYears = dict([(seiyu, 2018-int(debut)) for seiyu, debut in debuts.items()])
 
-	popularities = nx.get_node_attributes(socialNetworkGraph, 'popularity')
+	# TODO: next code can work in an unexpected way since dictionaries are not ordered
+	genderEncoder = LabelEncoder().fit(genders.values())
+	genders = dict(zip(genders.keys(), genderEncoder.transform(genders.values()))) 
 
-	#-------
-	personalDataPerSeiyuu = {}
+	personalData = pd.DataFrame(debuts, index=['debut']).T
+	personalData['gender'] = pd.Series(genders, index=personalData.index)
+	personalData['activityYears'] = pd.Series(activityYears, index=personalData.index)
+
+	return personalData
+
+def prepareGraphData(socialNetworkGraph):
+	degree = dict(nx.degree(socialNetworkGraph))
+	btwC = nx.betweenness_centrality(socialNetworkGraph)
+	closeness = nx.closeness_centrality(socialNetworkGraph)
+	eigenvector = nx.eigenvector_centrality(socialNetworkGraph)
+
+	graphData = pd.DataFrame(degree, index=['degree']).T
+	graphData['btwC'] = pd.Series(btwC, index=graphData.index)
+	graphData['closeness'] = pd.Series(closeness, index=graphData.index)
+	graphData['eigenvector'] = pd.Series(eigenvector, index=graphData.index)
+	
+	return graphData
+
+def prepareWorkAndRecentWorkData(socialNetworkGraph):
 	workDataPerSeiyuu = {}
 	recentWorkDataPerSeiyuu = {}
-	graphDataPerSeiyuu = {}
-
-	desiredFeaturesOfWorks = ['favorites', 'score']
+	
+	desiredFeaturesOfWorks = ['favorites', 'score', 'popularity']
 
 	for seiyuuUri in socialNetworkGraph.nodes():
-		# PERSONAL -TODO
-		personalData = {}
-		personalData['activityYears'] = activityYears[seiyuuUri]
-
-		personalDataPerSeiyuu[seiyuuUri] = personalData
-
-		# WORK
 		workData = {}
 		recentWorkData = {}
 
 		workData['amountOfWorks'] = amountOfWorksFor(seiyuuUri)
 		recentWorkData['amountOfWorks'] = amountOfWorksForStartingIn(seiyuuUri, 2009)
+
+		# TODO agregar genre de los trabajos (todos (sin repetidos), y el top 5)
 
 		for feature in desiredFeaturesOfWorks:
 			suma, mean, median, maximum = featureOfWorksStartingIn(seiyuuUri, 1960, feature)
@@ -139,80 +176,69 @@ def main(inputFileName):
 		workDataPerSeiyuu[seiyuuUri] = workData
 		recentWorkDataPerSeiyuu[seiyuuUri] = recentWorkData
 
-		# GRAPH -TODO
-		graphData = {}
-		graphData['degree'] = degree[seiyuuUri]
-		graphData['betweenness'] = btwC[seiyuuUri]
-		graphData['closeness'] = closeness[seiyuuUri]
-		graphData['eigenvector'] = eigenvector[seiyuuUri]
+	workData = pd.DataFrame(workDataPerSeiyuu).T
+	recentWorkData = pd.DataFrame(recentWorkDataPerSeiyuu).T
+	
+	return workData, recentWorkData
 
-		graphDataPerSeiyuu[seiyuuUri] = graphData
+def runModels(models, data, target, categoryName):
+	runResults = {}
 
-	# DATA FRAMES
-	personalDataFrame = pd.DataFrame(personalDataPerSeiyuu)
-	workDataFrame = pd.DataFrame(workDataPerSeiyuu)
-	recentWorkDataFrame = pd.DataFrame(recentWorkDataPerSeiyuu)
-	graphDataFrame = pd.DataFrame(graphDataPerSeiyuu)
+	data_train, data_test, target_train, target_test = train_test_split(data, target, test_size=0.20)
+	for modelName, model in models.iteritems():
+		model.fit(data_train, target_train)
 
-	popularityDataFrame = pd.DataFrame(popularities, index=['popularity'])
+		predicted = model.predict(data_test)
 
-	# DATA AND TARGET
-	data = workDataFrame.T
-	target = popularityDataFrame.T
+		plotPredictions(target_test, predicted, categoryName + modelName, [target.min(), target.max()])
 
-	# ********************** DECISION TREE REGRESSOR ********************** 
-	X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.20)  
+		runResults[modelName] = metrics.median_absolute_error(target_test, predicted)
 
-	# instantiate and train it
-	regressor = DecisionTreeRegressor()  
-	regressor.fit(X_train, y_train)
+	return runResults
 
-	# test predictions
-	predicted = regressor.predict(X_test)  
+def main(inputFileName):
+	socialNetworkGraph = nx.read_gexf(inputFileName)
 
-	fig, ax = plt.subplots()
-	ax.scatter(y_test, predicted, edgecolors=(0, 0, 0))
-	ax.plot([target.min(), target.max()], [target.min(), target.max()], 'k--', lw=4)
-	ax.set_xlabel('Measured')
-	ax.set_ylabel('Predicted')
+	# DATA CATEGORIES
+	personalData = preparePersonalData(socialNetworkGraph)
+	graphData = prepareGraphData(socialNetworkGraph)
+	workData, recentWorkData = prepareWorkAndRecentWorkData(socialNetworkGraph)
+	
+	# TARGET
+	popularityData = pd.DataFrame(nx.get_node_attributes(socialNetworkGraph, 'popularity'), index=['popularity']).T
 
-	plt.savefig('graphics/decisionTreeRegressor.png', bbox_inches='tight', dpi=100)
-	# plt.show()
-	plt.close()
+	allCategoriesData = {
+		'personalData': personalData, 
+		'workData': workData,
+		'recentWorkData': recentWorkData,
+		'graphData': graphData
+	}
+	categories = allCategoriesData.keys()
 
-	# ********************** DECISION TREE CLASSIFIER ********************** 
+	models = {
+		'DTR': DecisionTreeRegressor(),
+		'DTC': DecisionTreeClassifier(),
+		'LR': LinearRegression()
+	}
 
-	# INSTANTIATE AND TRAIN
-	model=DecisionTreeClassifier()
-	model.fit(data,target)
+	results = {}
 
-	# OUTPUT GRAPHIC REPRESENTATION
-	dot_data = StringIO()
+	target = popularityData
 
-	export_graphviz(model, out_file=dot_data,  
-	                filled=True, rounded=True,
-	                special_characters=True, feature_names=data.columns.values.tolist())
+	for r in xrange(1,len(categories)+1):
+		combs = combinations(categories, r)
 
-	graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  
-	graph.write_png('sarasa.png')
+		for combination in combs:
+			categoryName = '_'.join(combination)
 
-	# MAKE PREDICTIONS
-	predicted = model.predict(data)
+			print('**************************\n' + categoryName)
 
-	fig, ax = plt.subplots()
-	ax.scatter(target, predicted, edgecolors=(0, 0, 0))
-	ax.plot([target.min(), target.max()], [target.min(), target.max()], 'k--', lw=4)
-	ax.set_xlabel('Measured')
-	ax.set_ylabel('Predicted')
+			data = pd.concat([allCategoriesData[c] for c in combination], axis=1)
+			results[categoryName] = runModels(models, data, target, categoryName)
 
-	plt.savefig('graphics/DecisionTreeClassifier.png', bbox_inches='tight', dpi=100)
-	# plt.show()
-	plt.close()
-
-	# To evaluate performance of the regression algorithm, the commonly used metrics are mean absolute error, mean squared error, and root mean squared error. 
-	print('Mean Absolute Error:', metrics.mean_absolute_error(target, predicted))  
-	print('Mean Squared Error:', metrics.mean_squared_error(target, predicted))  
-	print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(target, predicted))) 
+	with open('outputFileName', 'w') as outputFile:
+		# TODO: formatear el output para tabla en pdf o algo así (o seaborn)
+		outputFile.write(str(results))
 
 if __name__ == '__main__':
 	inputFileName = 'graphs/atLeast1Works_1960-1960.gexf'
