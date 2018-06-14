@@ -160,8 +160,12 @@ def getGenre(worksGenreList):
 			genreAmountDict[genre] += 1
 
 	allGenres = [x[0] for x in sorted(genreAmountDict.items(), key=operator.itemgetter(1), reverse=True)]
+	topGenre = u'None'
 
-	return allGenres, allGenres[:5]
+	if len(allGenres) > 0:
+		topGenre = allGenres[0]
+
+	return topGenre
 
 def prepareWorkAndRecentWorkData(socialNetworkGraph):
 	workDataPerSeiyuu = {}
@@ -173,7 +177,7 @@ def prepareWorkAndRecentWorkData(socialNetworkGraph):
 		u'Comedy', u'Yaoi', u'Harem', u'Josei', u'Mecha', u'Slice of Life', u'Cars', u'Horror', u'Game', u'Shoujo', 
 		u'Adventure', u'Shounen Ai', u'Ecchi', u'Thriller', u'Yuri', u'Mystery', u'School', u'Kids', u'Magic', u'Drama', 
 		u'Samurai', u'Historical', u'Action', u'Military', u'Parody', u'Seinen', u'Dementia', u'Shounen', u'Psychological', 
-		u'Fantasy', u'Music', u'Hentai', u'Martial Arts', u'Super Power', u'Shoujo Ai']
+		u'Fantasy', u'Music', u'Hentai', u'Martial Arts', u'Super Power', u'Shoujo Ai', u'None']
 	genreEncoder = LabelEncoder().fit(allGenres)
 
 	for seiyuuUri in socialNetworkGraph.nodes():
@@ -185,13 +189,11 @@ def prepareWorkAndRecentWorkData(socialNetworkGraph):
 		recentWorkData['amountOfRecentWorks'] = amountOfWorksForStartingIn(seiyuuUri, 2009)
 
 		# genre
-		allGenre, top5Genre = getGenre(featureOfWorksStartingIn(seiyuuUri, 1960, 'genre'))
-		workData['worksAllGenre'] = genreEncoder.transform(allGenre) 
-		workData['worksTop5Genre'] = genreEncoder.transform(top5Genre)
+		topGenre = getGenre(featureOfWorksStartingIn(seiyuuUri, 1960, 'genre'))
+		workData['worksTopGenre'] = genreEncoder.transform([topGenre])
 
-		allGenre, top5Genre = getGenre(featureOfWorksStartingIn(seiyuuUri, 2009, 'genre'))
-		recentWorkData['recentWorksAllGenre'] = genreEncoder.transform(allGenre) 
-		recentWorkData['recentWorksTop5Genre'] = genreEncoder.transform(top5Genre) 
+		topGenre = getGenre(featureOfWorksStartingIn(seiyuuUri, 2009, 'genre'))
+		recentWorkData['recentWorksTopGenre'] = genreEncoder.transform([topGenre]) 
 
 		# other features
 		for feature in desiredFeaturesOfWorks:
