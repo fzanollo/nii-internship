@@ -262,19 +262,18 @@ def main(inputFileName):
 	models = {
 		'DecisionTreeRegressor': DecisionTreeRegressor(),
 		'DecisionTreeClassifier': DecisionTreeClassifier(),
-		'LinearRegression': LinearRegression()
-		# 'KNeighborsClassifier': KNeighborsClassifier(),
-		# 'LinearDiscriminantAnalysis': LinearDiscriminantAnalysis(),
-		# 'GaussianNB': GaussianNB(),
-		# 'SVM': SVC()
+		'LinearRegression': LinearRegression(),
+		'KNeighborsClassifier': KNeighborsClassifier(),
+		'LinearDiscriminantAnalysis': LinearDiscriminantAnalysis(),
+		'GaussianNB': GaussianNB(),
+		'SVM': SVC()
 	}
 
 	results = OrderedDict()
 
 	target = popularityData
 
-	for r in xrange(1,2):
-	# for r in xrange(1,len(categories)+1):
+	for r in xrange(1,len(categories)+1):
 		combs = combinations(categories, r)
 
 		for combination in combs:
