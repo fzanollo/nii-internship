@@ -1,6 +1,8 @@
 import sys
 from datetime import date
 from itertools import combinations
+from collections import OrderedDict
+import operator
 
 import yaml
 import json
@@ -50,7 +52,7 @@ def querySPARQLEndpoint(query):
 	return bindings
 
 def getWorksStartingIn(seiyuuUri, year):
-	return querySPARQLEndpoint("""
+	rawWorkData = querySPARQLEndpoint("""
 		SELECT ?anime_uri
 		WHERE {{
 			?anime_uri wdt:P725 <{0}>.
@@ -59,6 +61,8 @@ def getWorksStartingIn(seiyuuUri, year):
 			FILTER(?start_year >= {1})
 		}}
 		""".format(seiyuuUri, year))
+	works = [w['anime_uri']['value'] for w in rawWorkData]
+	return works
 
 def measures(values):
 	suma = mean = median = maximum = 0
@@ -75,7 +79,7 @@ def featureOfWorksStartingIn(seiyuuUri, year, info):
 
 	values = [ws[info] for ws in worksInfo]
 
-	return measures(values)
+	return values
 
 def amountOfWorksForStartingIn(seiyuuUri, year):
 	result = querySPARQLEndpoint("""
@@ -145,33 +149,63 @@ def prepareGraphData(socialNetworkGraph):
 	
 	return graphData
 
+def getGenre(worksGenreList):
+	genreAmountDict = {}
+
+	for workGenre in worksGenreList:
+		for genre in workGenre:
+			genre = genre['name']
+			if genre not in genreAmountDict:
+				genreAmountDict[genre] = 0
+			genreAmountDict[genre] += 1
+
+	allGenres = [x[0] for x in sorted(genreAmountDict.items(), key=operator.itemgetter(1), reverse=True)]
+
+	return allGenres, allGenres[:5]
+
 def prepareWorkAndRecentWorkData(socialNetworkGraph):
 	workDataPerSeiyuu = {}
 	recentWorkDataPerSeiyuu = {}
 	
 	desiredFeaturesOfWorks = ['favorites', 'score', 'popularity']
 
+	allGenres = [u'Police', u'Sci-Fi', u'Space', u'Vampire', u'Demons', u'Sports', u'Romance', u'Supernatural', 
+		u'Comedy', u'Yaoi', u'Harem', u'Josei', u'Mecha', u'Slice of Life', u'Cars', u'Horror', u'Game', u'Shoujo', 
+		u'Adventure', u'Shounen Ai', u'Ecchi', u'Thriller', u'Yuri', u'Mystery', u'School', u'Kids', u'Magic', u'Drama', 
+		u'Samurai', u'Historical', u'Action', u'Military', u'Parody', u'Seinen', u'Dementia', u'Shounen', u'Psychological', 
+		u'Fantasy', u'Music', u'Hentai', u'Martial Arts', u'Super Power', u'Shoujo Ai']
+	genreEncoder = LabelEncoder().fit(allGenres)
+
 	for seiyuuUri in socialNetworkGraph.nodes():
 		workData = {}
 		recentWorkData = {}
 
+		# amount
 		workData['amountOfWorks'] = amountOfWorksFor(seiyuuUri)
-		recentWorkData['amountOfWorks'] = amountOfWorksForStartingIn(seiyuuUri, 2009)
+		recentWorkData['amountOfRecentWorks'] = amountOfWorksForStartingIn(seiyuuUri, 2009)
 
-		# TODO agregar genre de los trabajos (todos (sin repetidos), y el top 5)
+		# genre
+		allGenre, top5Genre = getGenre(featureOfWorksStartingIn(seiyuuUri, 1960, 'genre'))
+		workData['worksAllGenre'] = genreEncoder.transform(allGenre) 
+		workData['worksTop5Genre'] = genreEncoder.transform(top5Genre)
 
+		allGenre, top5Genre = getGenre(featureOfWorksStartingIn(seiyuuUri, 2009, 'genre'))
+		recentWorkData['recentWorksAllGenre'] = genreEncoder.transform(allGenre) 
+		recentWorkData['recentWorksTop5Genre'] = genreEncoder.transform(top5Genre) 
+
+		# other features
 		for feature in desiredFeaturesOfWorks:
-			suma, mean, median, maximum = featureOfWorksStartingIn(seiyuuUri, 1960, feature)
+			suma, mean, median, maximum = measures(featureOfWorksStartingIn(seiyuuUri, 1960, feature))
 			workData[feature + 'OfWorks_Sum'] = suma
 			workData[feature + 'OfWorks_Mean'] = mean
 			workData[feature + 'OfWorks_Median'] = median
 			workData[feature + 'OfWorks_Max'] = maximum
 			
-			suma, mean, median, maximum = featureOfWorksStartingIn(seiyuuUri, 2009, feature)
-			recentWorkData[feature + 'OfWorks_Sum'] = suma
-			recentWorkData[feature + 'OfWorks_Mean'] = mean
-			recentWorkData[feature + 'OfWorks_Median'] = median
-			recentWorkData[feature + 'OfWorks_Max'] = maximum
+			suma, mean, median, maximum = measures(featureOfWorksStartingIn(seiyuuUri, 2009, feature))
+			recentWorkData[feature + 'OfRecentWorks_Sum'] = suma
+			recentWorkData[feature + 'OfRecentWorks_Mean'] = mean
+			recentWorkData[feature + 'OfRecentWorks_Median'] = median
+			recentWorkData[feature + 'OfRecentWorks_Max'] = maximum
 
 		workDataPerSeiyuu[seiyuuUri] = workData
 		recentWorkDataPerSeiyuu[seiyuuUri] = recentWorkData
@@ -190,9 +224,17 @@ def runModels(models, data, target, categoryName):
 
 		predicted = model.predict(data_test)
 
-		plotPredictions(target_test, predicted, categoryName + modelName, [target.min(), target.max()])
+		plotPredictions(target_test, predicted, categoryName + '_' + modelName, [target.min(), target.max()])
 
 		runResults[modelName] = metrics.median_absolute_error(target_test, predicted)
+
+		if modelName == 'DecisionTreeClassifier':
+			featureImportances = pd.Series(model.feature_importances_, index=data.columns)
+			featureImportances = featureImportances.nlargest(20)
+			featureImportances.plot(kind='barh')
+			plt.savefig('graphics/{0}_DTC_featureImportances.png'.format(categoryName), bbox_inches='tight', dpi=100)
+			# plt.show()
+			plt.close()
 
 	return runResults
 
@@ -216,29 +258,37 @@ def main(inputFileName):
 	categories = allCategoriesData.keys()
 
 	models = {
-		'DTR': DecisionTreeRegressor(),
-		'DTC': DecisionTreeClassifier(),
-		'LR': LinearRegression()
+		'DecisionTreeRegressor': DecisionTreeRegressor(),
+		'DecisionTreeClassifier': DecisionTreeClassifier(),
+		'LinearRegression': LinearRegression()
+		# 'KNeighborsClassifier': KNeighborsClassifier(),
+		# 'LinearDiscriminantAnalysis': LinearDiscriminantAnalysis(),
+		# 'GaussianNB': GaussianNB(),
+		# 'SVM': SVC()
 	}
 
-	results = {}
+	results = OrderedDict()
 
 	target = popularityData
 
-	for r in xrange(1,len(categories)+1):
+	for r in xrange(1,2):
+	# for r in xrange(1,len(categories)+1):
 		combs = combinations(categories, r)
 
 		for combination in combs:
 			categoryName = '_'.join(combination)
+			if r == len(categories):
+				categoryName = 'AllFeatures'
 
 			print('**************************\n' + categoryName)
 
 			data = pd.concat([allCategoriesData[c] for c in combination], axis=1)
 			results[categoryName] = runModels(models, data, target, categoryName)
 
-	with open('outputFileName', 'w') as outputFile:
-		# TODO: formatear el output para tabla en pdf o algo así (o seaborn)
-		outputFile.write(str(results))
+	with open('predictionPerformances.csv', 'w') as outputFile:
+		# TODO: formatear el output para tabla en pdf o algo asi (o seaborn)
+		resultsDF = pd.DataFrame(results)
+		outputFile.write(resultsDF.to_csv())
 
 if __name__ == '__main__':
 	inputFileName = 'graphs/atLeast1Works_1960-1960.gexf'
