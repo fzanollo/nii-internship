@@ -97,9 +97,9 @@ def amountOfWorksForStartingIn(seiyuuUri, year):
 def amountOfWorksFor(seiyuuUri):
 	return amountOfWorksForStartingIn(seiyuuUri, 1960)
 
-def plotPredictions(measured, predicted, filename, boundaries=None):
-	if boundaries == None:
-		boundaries = [measured.min(), measured.max()]
+def plotPredictions(measured, predicted, filename, boundaries):
+	measured = measured['popularity'].tolist()
+	predicted = predicted.tolist()
 
 	fig, ax = plt.subplots()
 	ax.scatter(measured, predicted, edgecolors=(0, 0, 0))
@@ -107,9 +107,22 @@ def plotPredictions(measured, predicted, filename, boundaries=None):
 	ax.set_xlabel('Measured')
 	ax.set_ylabel('Predicted')
 
-	plt.savefig('graphics/{0}.png'.format(filename), bbox_inches='tight', dpi=100)
+	plt.title(filename)
+	plt.savefig('cart/predictions/{0}.png'.format(filename), bbox_inches='tight', dpi=100)
 	# plt.show()
 	plt.close()
+
+	with open('cart/predictions/{0}.json'.format(filename), 'w') as outputFile:
+		outputFile.write(json.dumps({
+			'xs': measured,
+			'ys': predicted,
+			'color': 'r', 
+			'xlabel': 'Measured', 
+			'ylabel': 'Predicted', 
+			'title': filename,
+			'outputFileName': filename,
+			'boundaries': [int(x) for x in boundaries]
+		}))
 
 def plotTree(model, data, filename):
 	dot_data = StringIO()
@@ -119,7 +132,7 @@ def plotTree(model, data, filename):
 	                special_characters=True, feature_names=data.columns.values.tolist())
 
 	graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  
-	graph.write_png('graphics/{0}.png'.format(filename))
+	graph.write_png('cart/tree/{0}.png'.format(filename))
 
 def preparePersonalData(socialNetworkGraph):
 	debuts = nx.get_node_attributes(socialNetworkGraph, 'debut')
@@ -218,7 +231,7 @@ def prepareWorkAndRecentWorkData(socialNetworkGraph):
 	return workData, recentWorkData
 
 def runModels(models, data, target, categoryName):
-	runResults = {}
+	meanAbsoluteErrorResults = {}
 
 	data_train, data_test, target_train, target_test = train_test_split(data, target, test_size=0.20)
 	for modelName, model in models.iteritems():
@@ -228,17 +241,18 @@ def runModels(models, data, target, categoryName):
 
 		plotPredictions(target_test, predicted, categoryName + '_' + modelName, [target.min(), target.max()])
 
-		runResults[modelName] = metrics.median_absolute_error(target_test, predicted)
+		meanAbsoluteErrorResults[modelName] = round(metrics.mean_absolute_error(target_test, predicted), 2)
 
 		if modelName == 'DecisionTreeClassifier':
 			featureImportances = pd.Series(model.feature_importances_, index=data.columns)
 			featureImportances = featureImportances.nlargest(20)
 			featureImportances.plot(kind='barh')
-			plt.savefig('graphics/{0}_DTC_featureImportances.png'.format(categoryName), bbox_inches='tight', dpi=100)
+			plt.title(categoryName)
+			plt.savefig('cart/tree/{0}_DTC_featureImportances.png'.format(categoryName), bbox_inches='tight', dpi=100)
 			# plt.show()
 			plt.close()
 
-	return runResults
+	return meanAbsoluteErrorResults
 
 def main(inputFileName):
 	socialNetworkGraph = nx.read_gexf(inputFileName)
@@ -286,7 +300,7 @@ def main(inputFileName):
 			data = pd.concat([allCategoriesData[c] for c in combination], axis=1)
 			results[categoryName] = runModels(models, data, target, categoryName)
 
-	with open('predictionPerformances.csv', 'w') as outputFile:
+	with open('cart/predictionsMeanAbsoluteError.csv', 'w') as outputFile:
 		# TODO: formatear el output para tabla en pdf o algo asi (o seaborn)
 		resultsDF = pd.DataFrame(results)
 		outputFile.write(resultsDF.to_csv())
