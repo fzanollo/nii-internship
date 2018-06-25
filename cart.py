@@ -232,6 +232,7 @@ def prepareWorkAndRecentWorkData(socialNetworkGraph):
 
 def runModels(models, data, target, categoryName):
 	meanAbsoluteErrorResults = {}
+	medianAbsoluteErrorResults = {}
 
 	data_train, data_test, target_train, target_test = train_test_split(data, target, test_size=0.20)
 	for modelName, model in models.iteritems():
@@ -242,6 +243,7 @@ def runModels(models, data, target, categoryName):
 		plotPredictions(target_test, predicted, categoryName + '_' + modelName, [target.min(), target.max()])
 
 		meanAbsoluteErrorResults[modelName] = round(metrics.mean_absolute_error(target_test, predicted), 2)
+		medianAbsoluteErrorResults[modelName] = round(metrics.median_absolute_error(target_test, predicted), 2)
 
 		if modelName == 'DecisionTreeClassifier':
 			featureImportances = pd.Series(model.feature_importances_, index=data.columns)
@@ -252,7 +254,7 @@ def runModels(models, data, target, categoryName):
 			# plt.show()
 			plt.close()
 
-	return meanAbsoluteErrorResults
+	return meanAbsoluteErrorResults, medianAbsoluteErrorResults
 
 def main(inputFileName):
 	socialNetworkGraph = nx.read_gexf(inputFileName)
@@ -263,8 +265,20 @@ def main(inputFileName):
 	workData, recentWorkData = prepareWorkAndRecentWorkData(socialNetworkGraph)
 	
 	# TARGET
-	popularityData = pd.DataFrame(nx.get_node_attributes(socialNetworkGraph, 'popularity'), index=['popularity']).T
+	popularities = nx.get_node_attributes(socialNetworkGraph, 'popularity')
+	popularityData = pd.DataFrame(popularities, index=['popularity']).T
 
+	# FILTER "OUTLIERS"
+	outliers = filter(lambda k: popularities[k]>1000, popularities)
+	outliers += filter(lambda k: popularities[k]==0, popularities)
+
+	personalData = personalData.drop(outliers)
+	graphData = graphData.drop(outliers)
+	workData = workData.drop(outliers)
+	recentWorkData = recentWorkData.drop(outliers)
+	popularityData = popularityData.drop(outliers)
+
+	# MODELS
 	allCategoriesData = {
 		'personalData': personalData, 
 		'workData': workData,
@@ -283,7 +297,8 @@ def main(inputFileName):
 		'SVM': SVC()
 	}
 
-	results = OrderedDict()
+	meanAbsoluteErrorResults = OrderedDict()
+	medianAbsoluteErrorResults = OrderedDict()
 
 	target = popularityData
 
@@ -298,11 +313,16 @@ def main(inputFileName):
 			print('**************************\n' + categoryName)
 
 			data = pd.concat([allCategoriesData[c] for c in combination], axis=1)
-			results[categoryName] = runModels(models, data, target, categoryName)
+			meanAbsoluteErrorResults[categoryName], medianAbsoluteErrorResults[categoryName] = runModels(models, data, target, categoryName)
 
 	with open('cart/predictionsMeanAbsoluteError.csv', 'w') as outputFile:
 		# TODO: formatear el output para tabla en pdf o algo asi (o seaborn)
-		resultsDF = pd.DataFrame(results)
+		resultsDF = pd.DataFrame(meanAbsoluteErrorResults)
+		outputFile.write(resultsDF.to_csv())
+
+	with open('cart/predictionsMedianAbsoluteError.csv', 'w') as outputFile:
+		# TODO: formatear el output para tabla en pdf o algo asi (o seaborn)
+		resultsDF = pd.DataFrame(medianAbsoluteErrorResults)
 		outputFile.write(resultsDF.to_csv())
 
 if __name__ == '__main__':
