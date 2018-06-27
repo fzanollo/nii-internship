@@ -73,11 +73,11 @@ def measures(values):
 		maximum = max(values)
 	return suma, mean, median, maximum
 
-def featureOfWorksStartingIn(seiyuuUri, year, info):
+def attributeOfWorksStartingIn(seiyuuUri, year, attribute):
 	works = getWorksStartingIn(seiyuuUri, year)
-	worksInfo = animeCollection.find({"id": {"$in": works}}, {'id':1, info:1})
+	worksInfo = animeCollection.find({"id": {"$in": works}}, {'id':1, attribute:1})
 
-	values = [ws[info] for ws in worksInfo]
+	values = [ws[attribute] for ws in worksInfo]
 
 	return values
 
@@ -162,7 +162,7 @@ def prepareGraphData(socialNetworkGraph):
 	
 	return graphData
 
-def getGenre(worksGenreList):
+def getTop5Genres(worksGenreList):
 	genreAmountDict = {}
 
 	for workGenre in worksGenreList:
@@ -173,12 +173,12 @@ def getGenre(worksGenreList):
 			genreAmountDict[genre] += 1
 
 	allGenres = [x[0] for x in sorted(genreAmountDict.items(), key=operator.itemgetter(1), reverse=True)]
-	topGenre = u'None'
+	top5Genres = allGenres[:5]
 
-	if len(allGenres) > 0:
-		topGenre = allGenres[0]
+	if len(top5Genres) < 5:
+		top5Genres += [u'None' for x in xrange(5-len(top5Genres))]
 
-	return topGenre
+	return top5Genres
 
 def prepareWorkAndRecentWorkData(socialNetworkGraph):
 	workDataPerSeiyuu = {}
@@ -202,21 +202,29 @@ def prepareWorkAndRecentWorkData(socialNetworkGraph):
 		recentWorkData['amountOfRecentWorks'] = amountOfWorksForStartingIn(seiyuuUri, 2009)
 
 		# genre
-		topGenre = getGenre(featureOfWorksStartingIn(seiyuuUri, 1960, 'genre'))
-		workData['worksTopGenre'] = genreEncoder.transform([topGenre])
+		top5Genres = getTop5Genres(attributeOfWorksStartingIn(seiyuuUri, 1960, 'genre'))
+		workData['worksGenre1'] = genreEncoder.transform([top5Genres[0]])
+		workData['worksGenre2'] = genreEncoder.transform([top5Genres[1]])
+		workData['worksGenre3'] = genreEncoder.transform([top5Genres[2]])
+		workData['worksGenre4'] = genreEncoder.transform([top5Genres[3]])
+		workData['worksGenre5'] = genreEncoder.transform([top5Genres[4]])
 
-		topGenre = getGenre(featureOfWorksStartingIn(seiyuuUri, 2009, 'genre'))
-		recentWorkData['recentWorksTopGenre'] = genreEncoder.transform([topGenre]) 
+		top5Genres = getTop5Genres(attributeOfWorksStartingIn(seiyuuUri, 2009, 'genre'))
+		recentWorkData['recentWorksGenre1'] = genreEncoder.transform([top5Genres[0]])
+		recentWorkData['recentWorksGenre2'] = genreEncoder.transform([top5Genres[1]])
+		recentWorkData['recentWorksGenre3'] = genreEncoder.transform([top5Genres[2]])
+		recentWorkData['recentWorksGenre4'] = genreEncoder.transform([top5Genres[3]])
+		recentWorkData['recentWorksGenre5'] = genreEncoder.transform([top5Genres[4]])
 
 		# other features
 		for feature in desiredFeaturesOfWorks:
-			suma, mean, median, maximum = measures(featureOfWorksStartingIn(seiyuuUri, 1960, feature))
+			suma, mean, median, maximum = measures(attributeOfWorksStartingIn(seiyuuUri, 1960, feature))
 			workData[feature + 'OfWorks_Sum'] = suma
 			workData[feature + 'OfWorks_Mean'] = mean
 			workData[feature + 'OfWorks_Median'] = median
 			workData[feature + 'OfWorks_Max'] = maximum
 			
-			suma, mean, median, maximum = measures(featureOfWorksStartingIn(seiyuuUri, 2009, feature))
+			suma, mean, median, maximum = measures(attributeOfWorksStartingIn(seiyuuUri, 2009, feature))
 			recentWorkData[feature + 'OfRecentWorks_Sum'] = suma
 			recentWorkData[feature + 'OfRecentWorks_Mean'] = mean
 			recentWorkData[feature + 'OfRecentWorks_Median'] = median
@@ -231,8 +239,7 @@ def prepareWorkAndRecentWorkData(socialNetworkGraph):
 	return workData, recentWorkData
 
 def runModels(models, data, target, categoryName):
-	meanAbsoluteErrorResults = {}
-	medianAbsoluteErrorResults = {}
+	results = {}
 
 	data_train, data_test, target_train, target_test = train_test_split(data, target, test_size=0.20)
 	for modelName, model in models.iteritems():
@@ -242,8 +249,8 @@ def runModels(models, data, target, categoryName):
 
 		plotPredictions(target_test, predicted, categoryName + '_' + modelName, [target.min(), target.max()])
 
-		meanAbsoluteErrorResults[modelName] = round(metrics.mean_absolute_error(target_test, predicted), 2)
-		medianAbsoluteErrorResults[modelName] = round(metrics.median_absolute_error(target_test, predicted), 2)
+		results[modelName] = round(metrics.r2_score(target_test, predicted), 2)
+		
 
 		if modelName == 'DecisionTreeClassifier':
 			featureImportances = pd.Series(model.feature_importances_, index=data.columns)
@@ -254,7 +261,7 @@ def runModels(models, data, target, categoryName):
 			# plt.show()
 			plt.close()
 
-	return meanAbsoluteErrorResults, medianAbsoluteErrorResults
+	return results
 
 def main(inputFileName):
 	socialNetworkGraph = nx.read_gexf(inputFileName)
@@ -268,15 +275,15 @@ def main(inputFileName):
 	popularities = nx.get_node_attributes(socialNetworkGraph, 'popularity')
 	popularityData = pd.DataFrame(popularities, index=['popularity']).T
 
-	# FILTER "OUTLIERS"
-	outliers = filter(lambda k: popularities[k]>1000, popularities)
-	outliers += filter(lambda k: popularities[k]==0, popularities)
+	# # FILTER "OUTLIERS"
+	# outliers = filter(lambda k: popularities[k]>1000, popularities)
+	# outliers += filter(lambda k: popularities[k]<5, popularities)
 
-	personalData = personalData.drop(outliers)
-	graphData = graphData.drop(outliers)
-	workData = workData.drop(outliers)
-	recentWorkData = recentWorkData.drop(outliers)
-	popularityData = popularityData.drop(outliers)
+	# personalData = personalData.drop(outliers)
+	# graphData = graphData.drop(outliers)
+	# workData = workData.drop(outliers)
+	# recentWorkData = recentWorkData.drop(outliers)
+	# popularityData = popularityData.drop(outliers)
 
 	# MODELS
 	allCategoriesData = {
@@ -297,8 +304,7 @@ def main(inputFileName):
 		'SVM': SVC()
 	}
 
-	meanAbsoluteErrorResults = OrderedDict()
-	medianAbsoluteErrorResults = OrderedDict()
+	results = OrderedDict()
 
 	target = popularityData
 
@@ -313,16 +319,11 @@ def main(inputFileName):
 			print('**************************\n' + categoryName)
 
 			data = pd.concat([allCategoriesData[c] for c in combination], axis=1)
-			meanAbsoluteErrorResults[categoryName], medianAbsoluteErrorResults[categoryName] = runModels(models, data, target, categoryName)
+			results[categoryName] = runModels(models, data, target, categoryName)
 
-	with open('cart/predictionsMeanAbsoluteError.csv', 'w') as outputFile:
+	with open('cart/predictionR2Score.csv', 'w') as outputFile:
 		# TODO: formatear el output para tabla en pdf o algo asi (o seaborn)
-		resultsDF = pd.DataFrame(meanAbsoluteErrorResults)
-		outputFile.write(resultsDF.to_csv())
-
-	with open('cart/predictionsMedianAbsoluteError.csv', 'w') as outputFile:
-		# TODO: formatear el output para tabla en pdf o algo asi (o seaborn)
-		resultsDF = pd.DataFrame(medianAbsoluteErrorResults)
+		resultsDF = pd.DataFrame(results)
 		outputFile.write(resultsDF.to_csv())
 
 if __name__ == '__main__':
