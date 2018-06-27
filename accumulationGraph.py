@@ -9,6 +9,8 @@ from pymongo import MongoClient
 
 import networkx as nx
 
+import numpy as np
+
 client = MongoClient()
 db = client.seiyuuData
 seiyuuCollection = db.seiyuu
@@ -130,8 +132,7 @@ def addNewNodesAndEdges(socialNetworkGraph, seiyuusOldWorks, currentYear):
 
 def main(requiredWorksInCommon, fromYear, toYear):
 	xs = xrange(fromYear, toYear+1)
-	nodesY = []
-	edgesY = []
+	avgShortestPaths = []
 
 	socialNetworkGraph = nx.Graph()
 	seiyuusOldWorks = {}
@@ -146,34 +147,25 @@ def main(requiredWorksInCommon, fromYear, toYear):
 		nx.write_gexf(socialNetworkGraph, "graphs/atLeast{0}Works_{1}-{2}.gexf".format(requiredWorksInCommon, startingYear, currentYear))
 		
 		# ANALIZE IT
-		nodesY.append(nx.number_of_nodes(socialNetworkGraph))
-		edgesY.append(nx.number_of_edges(socialNetworkGraph))
+		componentAvgShortestPaths = []
+		for component in nx.connected_component_subgraphs(socialNetworkGraph):
+			componentAvgShortestPaths = nx.average_shortest_path_length(component)
 
-	# xs = range(1960, 2019)
+		avgShortestPaths.append(np.mean(componentAvgShortestPaths))
 
-	# nodeFilename = 'accumulationNodes_{0}_{1}-{2}'.format(requiredWorksInCommon, fromYear, toYear)
-	# with open('aux/{0}.json'.format(nodeFilename), 'w') as nodesOutputFile:
-	# 	nodesOutputFile.write(json.dumps({
-	# 	'xs': xs, 
-	# 	'ys': nodesY, 
-	# 	'color': 'r', 
-	# 	'xlabel': 'Years', 
-	# 	'ylabel': 'Number of nodes', 
-	# 	'title': 'Accumulation of nodes over time, with at least {0} works in common'.format(requiredWorksInCommon), 
-	# 	'outputFileName': nodeFilename
-	# }))
-	
-	# edgesFilename = 'accumulationEdges_{0}_{1}-{2}.json'.format(requiredWorksInCommon, fromYear, toYear)
-	# with open('aux/{0}.json'.format(edgesFilename), 'w') as edgesOutputFile:
-	# 	edgesOutputFile.write(json.dumps({
-	# 	'xs': xs, 
-	# 	'ys': edgesY, 
-	# 	'color': 'b', 
-	# 	'xlabel': 'Years', 
-	# 	'ylabel': 'Number of edges', 
-	# 	'title': 'Accumulation of edges over time, with at least {0} works in common'.format(requiredWorksInCommon), 
-	# 	'outputFileName': edgesFilename
-	# }))
+	xs = range(1960, 2019)
+
+	filename = 'avgShortestPaths_{0}_{1}-{2}'.format(requiredWorksInCommon, fromYear, toYear)
+	with open('json4Graphic/{0}.json'.format(filename), 'w') as outfile:
+		outfile.write(json.dumps({
+		'xs': xs, 
+		'ys': avgShortestPaths, 
+		'color': 'r', 
+		'xlabel': 'Years', 
+		'ylabel': 'Average shortest path length', 
+		'title': 'Average shortest path length over years, with at least {0} works in common'.format(requiredWorksInCommon), 
+		'outputFileName': filename
+	}))
 
 if __name__ == '__main__':
 	requiredWorksInCommon = 1

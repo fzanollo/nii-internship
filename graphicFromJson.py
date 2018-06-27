@@ -28,12 +28,13 @@ def main(inputFileName):
 	plt.plot(xs,ys,'{0}-'.format(color))
 
 	# X TICKS
-	plt.xticks([])
+	plt.xticks(range(1960, 2021, 5))
 
 	# Y TICKS
 	ax = plt.gca()
 	ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 	ax.yaxis.grid(which="major", color='k', linestyle='-', linewidth=.2)
+	ax.xaxis.grid(which="major", color='k', linestyle='-', linewidth=.2)
 	ax.set_ylim(ymin=0)
 	if 'ytickInterval' in graphicInfo:
 		ytickInterval = graphicInfo['ytickInterval']
