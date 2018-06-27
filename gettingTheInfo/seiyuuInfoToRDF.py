@@ -39,11 +39,10 @@ def main(inputFileName, outputFileName):
 		# seiyu_uri rdfs:label name
 		outputFile.write(u'<{0}> {1} "{2}"@{3} .\n'.format(seiyuuUri, "rdfs:label", seiyuu['seiyu_label']['value'], seiyuu['seiyu_label']['xml:lang']))
 
-		# seiyu_uri wdt:mal_id mal_id
-		if 'MAL_ID' in seiyuu:
-			outputFile.write(u'<{0}> {1} <{2}> .\n'.format(seiyuuUri, "wdt:P4084", 'https://api.jikan.moe/person/' + str(seiyuu['MAL_ID']['value'])))
-
 		if seiyuuData != None:
+			# seiyu_uri wdt:mal_id mal_id
+			outputFile.write(u'<{0}> {1} <{2}> .\n'.format(seiyuuUri, "wdt:P4084", 'https://api.jikan.moe/person/' + str(seiyuuData['mal_id'])))
+			
 			if 'voice_acting_role' in seiyuuData:
 				for work in seiyuuData['voice_acting_role']:
 					animeURI = 'https://api.jikan.moe/anime/' + str(work['anime']['mal_id'])
