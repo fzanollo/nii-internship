@@ -19,7 +19,14 @@ NetworkX was chosen because it's an easy yet powerful Python library, it doesn't
 We needed to build the edges dynamically because they depend on the time frame we are looking at. For example if two actors worked together in 9 jobs between 1960 and 1970 we shouldn't see an edge between them; but if they worked together again in 1971 then looking at 1960-1971 they should be connected.
 
 \subsection{Analysis}
-Is easy to tell at first glance that this social network is really interconnected. With only 2956 nodes it has 395887 edges when only one work in common is required and 13629 edges when asking for 10 or more. It shows a thightly interconnected cluster surrounded by poorly or not connected nodes. This cluster represents 
+Is easy to tell at first glance that this social network is really interconnected. With only 2956 nodes it has 395887 edges when only one work in common is required and 13629 edges when asking for 10 or more. It shows a thightly interconnected cluster surrounded by poorly or not connected nodes. 
+
+TODO \\
+- HOW MUCH THE CLUSTER REPRESENTS IN EACH GRAPH, \\
+- MODULARITY OF EACH GRAPH (MAYBE WITH SOME SNAPSHOT), \\
+- DEGREE AND BTW CENTRALITY EXPLAINED WITH SOME TABLE OF TOP 10 NODES\\
+- GRAPHIC AND EXPLANATION OF HOW NODES AND EDGES GROW, THE FACT THAT'S SIMILAR FOR BOTH GRAPHS\\
+- NEW NETWORKX METRICS FOR EACH GRAPH, SHOWN ON A TABLE\\
 
 
 

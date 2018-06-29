@@ -66,5 +66,51 @@ Some interesting enough correlations are shown next
 TODO ADD SCATTER PLOTS AND EXPLAIN A LITTLE MORE
 
 \subsection{Correlation with multiple features}
+For this section Scikit-learn, a free software machine learning Python library, was used. The node attributes were divided into categories, leaving four distinct types:
+
+\begin{itemize}
+	\item Personal data:
+	\begin{itemize}
+		\item Debut
+		\item Gender
+		\item Activity years (2018-debut)
+	\end{itemize}
+	\item Works data:
+	\begin{itemize}
+		\item Amount
+		\item Top 5 genre
+		\item Favorites
+		\item Score
+		\item Popularity
+	\end{itemize}
+	\item Recent works data:
+	\begin{itemize}
+		\item Same as works but for only last 9 years
+	\end{itemize}	
+	\item Graph data:
+	\begin{itemize}
+		\item Degree
+		\item Betweenness centrality
+		\item Closeness
+	\end{itemize}
+\end{itemize}
+
+Fitting and prediction experiments were run for each category, each combination of 2, 3 and all of them together; using 80\% as train data and the rest as test. This was done for all following models:
+\begin{itemize}
+	\item DecisionTreeRegressor
+	\item DecisionTreeClassifier
+	\item LinearRegression
+	\item KNeighborsClassifier
+	\item LinearDiscriminantAnalysis
+	\item GaussianNB
+	\item SVM
+\end{itemize}
+
+TODO, WRITE THIS AGAIN:
+To compare prediction performance mean and median absolute error were used. Unfortunately since popularity variance is really high we observed good results in terms of absolute error but particular predictions were aloof. That's why we ended up using r2\_score for accuracy comparation. 
+
+TODO SHOW TABLE WITH R2 SCORE RESULTS FOR EACH CATEGORY / MODEL AND GROUP OF CATEGORIES
+
+
 
 
