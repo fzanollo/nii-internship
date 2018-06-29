@@ -1,0 +1,25 @@
+\section{Seiyuu Social Network}
+TODO add little explanation about social network
+
+\subsection{Node and edge definition}
+Our social network consists of voice actors (seiyuu) as nodes and co-workership between them as edges. It's important to notice that this social network is time dependant since each seiyuu has a debut year and each anime has an aired time; giving us freedom to choose different time frames to observe it.
+
+Aside from being time dependant there exists different possible definitions of relationship or co-workership between seiyuu. One could say two actors know each other if they have worked in at least one job together, or maybe it requires more than one. There’s also a time frame to define, relationship could take into account all works of both of them or only of a certain time frame.
+
+After observing graphs built with different interpretations of relationship, the criteria for connecting two nodes became: at least 10 works in common, during the time frame between the first debut registered (1960) and the year of observation.
+The reason behind this decision is that requiring more jobs in common means less amount of edges; this leaves a more understandable graph without changing its structure.
+
+There's also other interesting definitions of relationship, for example we can use only common works from the last x years. This options weren't explored; having into account our limited time we opted to decide on one and put more effort in analyzing the data and social network at hand.
+
+\subsection{Construction}
+As a first approach Gephi was used to build the network. Since the graph was big enough to bring performance problems and we needed to build the edges dynamically (which couldn't be done in Gephi) NetworkX was used instead.
+
+NetworkX was chosen because it's an easy yet powerful Python library, it doesn't get along with massive graphs but ours was not big enough to present a problem. One can also export the graph and open it on Gephi, for a more visual analysis.
+
+We needed to build the edges dynamically because they depend on the time frame we are looking at. For example if two actors worked together in 9 jobs between 1960 and 1970 we shouldn't see an edge between them; but if they worked together again in 1971 then looking at 1960-1971 they should be connected.
+
+\subsection{Analysis}
+Is easy to tell at first glance that this social network is really interconnected. With only 2956 nodes it has 395887 edges when only one work in common is required and 13629 edges when asking for 10 or more. It shows a thightly interconnected cluster surrounded by poorly or not connected nodes. This cluster represents 
+
+
+
