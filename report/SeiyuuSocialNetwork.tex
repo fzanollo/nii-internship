@@ -1,5 +1,5 @@
 \section{Seiyuu Social Network}
-TODO add little explanation about social network
+Social networks are a graph like structure with a set of nodes, usually actors or organizations; and a set of edges, defined as a type of relation between actors. This structures are useful to analyze complex social interactions and communities.
 
 \subsection{Node and edge definition}
 Our social network consists of voice actors (seiyuu) as nodes and co-workership between them as edges. It's important to notice that this social network is time dependant since each seiyuu has a debut year and each anime has an aired time; giving us freedom to choose different time frames to observe it.
@@ -19,14 +19,127 @@ NetworkX was chosen because it's an easy yet powerful Python library, it doesn't
 We needed to build the edges dynamically because they depend on the time frame we are looking at. For example if two actors worked together in 9 jobs between 1960 and 1970 we shouldn't see an edge between them; but if they worked together again in 1971 then looking at 1960-1971 they should be connected.
 
 \subsection{Analysis}
-Is easy to tell at first glance that this social network is really interconnected. With only 2956 nodes it has 395887 edges when only one work in common is required and 13629 edges when asking for 10 or more. It shows a thightly interconnected cluster surrounded by poorly or not connected nodes. 
+Is easy to tell at first glance that this social network is really interconnected. With only 2956 nodes it has 395887 edges when only one work in common is required and 13629 edges when asking for 10 or more. It shows a thightly interconnected cluster surrounded by poorly or not connected nodes. This cluster represents 99\% of the nodes of one work in common graph and 23\% of 10 works in common.
+
+In terms of modularity we can see at least four clear communities in each graph.
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{graphics/atLeast1WorkCommunity.png}
+	\caption{At least one work in common graph coloured by community.}
+	\label{fig:graph1CommunityColoured}
+
+	\includegraphics[width=\columnwidth]{graphics/atLeast10WorksCommunity.png}
+	\caption{At least ten works in common graph coloured by community. Big cluster at the center, surrounded by loosely connected nodes.}
+	\label{fig:graph10CommunityColoured}
+	\end{center}
+\end{figure}
+
+Table~\ref{tab:graphComparision} shows some metrics about each graph. Requiring more works in common decreases average degree circumstantially but doesn't change a lot modularity or network diameter.
+\begin{table}[!hbt]
+	\begin{center}
+	\caption{Graph analysis}
+	\label{tab:graphComparision}
+	\begin{tabular}{|l|c|c|c|}
+		\hline
+		Graph & Avg Degree & Graph Density & Modularity \\
+		\hline
+		One work in common & 267 & 0.09 & 0.2 \\
+		\hline
+		Ten works in common & 9 & 0.003 & 0.29 \\
+		\hline
+	\end{tabular}\\
+	\smallskip
+	\begin{tabular}{|l|c|c|}
+		\hline
+		Graph & Network Diameter & Connected Components \\
+		\hline
+		One work in common & 6 & 18 \\
+		\hline
+		Ten works in common & 7 & 2261 \\
+		\hline
+	\end{tabular}
+	\end{center}
+\end{table}
+
+Tables~\ref{tab:top10Degree} and ~\ref{tab:top10BtwC} show top 10 nodes, for degree and betweenness centrality. Only for 10 works in common graph since, aside from actual values, they are similar. 
+\begin{table}[!hbt]
+	\begin{center}
+	\caption{Top 10 degree}
+	\label{tab:top10Degree}
+	\begin{tabular}{|l|c|}
+		\hline
+		Name & Degree\\ 
+		\hline
+		Takehito Koyasu & 311 \\ 
+		\hline
+		Akira Ishida & 273\\ 
+		\hline
+		Mamiko Noto & 258\\ 
+		\hline
+		Daisuke Namikawa & 232 \\ 
+		\hline
+		Katsuyuki Konishi & 229 \\ 
+		\hline
+		Keiji Fujiwara & 220 \\ 
+		\hline
+		Junichi Suwabe & 216 \\ 
+		\hline
+		Toshiyuki Morikawa & 215 \\ 
+		\hline
+		Rie Kugimiya & 213 \\ 
+		\hline
+		Nobuyuki Hiyama & 201 \\ 
+		\hline
+	\end{tabular}
+	\end{center}
+\end{table}
+
+\begin{table}[!hbt]
+	\begin{center}
+	\caption{Top 10 Betweenness centrality}
+	\label{tab:top10BtwC}
+	\begin{tabular}{|l|c|}
+		\hline
+		Name & Betweenness Centrality \\ 
+		\hline
+		Takehito Koyasu & 18489.440724 \\ 
+		\hline
+		Mamiko Noto & 10988.962717 \\ 
+		\hline
+		Daisuke Namikawa & 9570.480619 \\ 
+		\hline
+		Akira Ishida & 8299.187308 \\ 
+		\hline
+		Rie Kugimiya & 7560.155871 \\ 
+		\hline
+		Katsuyuki Konishi & 7413.715782 \\ 
+		\hline
+		Kenichi Ogata & 7160.536666 \\ 
+		\hline
+		Harumi Sakurai & 6775.762776 \\ 
+		\hline
+		Keiji Fujiwara & 5980.58333 \\ 
+		\hline
+		Yoshimasa Hosoya & 5607.954551 \\ 
+		\hline
+	\end{tabular}
+	\end{center}
+\end{table}
 
 TODO \\
-- HOW MUCH THE CLUSTER REPRESENTS IN EACH GRAPH, \\
-- MODULARITY OF EACH GRAPH (MAYBE WITH SOME SNAPSHOT), \\
-- DEGREE AND BTW CENTRALITY EXPLAINED WITH SOME TABLE OF TOP 10 NODES\\
-- GRAPHIC AND EXPLANATION OF HOW NODES AND EDGES GROW, THE FACT THAT'S SIMILAR FOR BOTH GRAPHS\\
-- NEW NETWORKX METRICS FOR EACH GRAPH, SHOWN ON A TABLE\\
+- GRAPHIC AND EXPLANATION OF HOW NODES AND EDGES GROW, THE FACT THAT'S SIMILAR FOR BOTH GRAPHS
+
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{graphics/edgesAccumulation.png}
+	\caption{Grow of edges over time. For 1, 5 and 10 works in common graphs}
+	\label{fig:accumulationEdges}
+
+	\includegraphics[width=\columnwidth]{graphics/nodesAccumulation.png}
+	\caption{Grow of nodes over time.}
+	\label{fig:accumulationNodes}
+	\end{center}
+\end{figure}
 
 
 
