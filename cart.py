@@ -1,4 +1,5 @@
 import sys
+import os
 from datetime import date
 from itertools import combinations
 from collections import OrderedDict
@@ -73,11 +74,34 @@ def measures(values):
 		maximum = max(values)
 	return suma, mean, median, maximum
 
+def getMalNumberFromUri(animeUri):
+	return animeUri[animeUri.rfind('/')+1:]
+
+def isMainRole(seiyuuUri, animeUri):
+	res = False
+	roleInfo = seiyuuCollection.find_one(
+		{"id": "{0}".format(seiyuuUri)}, 
+		{"voice_acting_role": {"$elemMatch":{"anime.mal_id":getMalNumberFromUri(animeUri)}}})
+
+	if "voice_acting_role" in roleInfo: 
+		role = roleInfo["voice_acting_role"][0]['character']['role']		
+		res = role == 'Main'
+
+	return res
+
 def attributeOfWorksStartingIn(seiyuuUri, year, attribute):
 	works = getWorksStartingIn(seiyuuUri, year)
 	worksInfo = animeCollection.find({"id": {"$in": works}}, {'id':1, attribute:1})
 
-	values = [ws[attribute] for ws in worksInfo]
+	values = []
+	for work in worksInfo:
+		value = work[attribute]
+
+		if attribute != 'genre':
+			if isMainRole(seiyuuUri, work['id']):
+				values.append(value)
+			else:
+				values.append(value//2)
 
 	return values
 
@@ -128,8 +152,8 @@ def plotTree(model, data, filename):
 	dot_data = StringIO()
 
 	export_graphviz(model, out_file=dot_data,  
-	                filled=True, rounded=True,
-	                special_characters=True, feature_names=data.columns.values.tolist())
+					filled=True, rounded=True,
+					special_characters=True, feature_names=data.columns.values.tolist())
 
 	graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  
 	graph.write_png('cart/tree/{0}.png'.format(filename))
@@ -184,7 +208,7 @@ def prepareWorkAndRecentWorkData(socialNetworkGraph):
 	workDataPerSeiyuu = {}
 	recentWorkDataPerSeiyuu = {}
 	
-	desiredFeaturesOfWorks = ['favorites', 'score', 'popularity']
+	desiredFeaturesOfWorks = ['favorites', 'score', 'popularity', 'members']
 
 	allGenres = [u'Police', u'Sci-Fi', u'Space', u'Vampire', u'Demons', u'Sports', u'Romance', u'Supernatural', 
 		u'Comedy', u'Yaoi', u'Harem', u'Josei', u'Mecha', u'Slice of Life', u'Cars', u'Horror', u'Game', u'Shoujo', 
@@ -331,5 +355,14 @@ if __name__ == '__main__':
 
 	if len(sys.argv) >= 2:
 		inputFileName = sys.argv[1]
+
+	if not os.path.exists('cart/'):
+		os.makedirs('cart/')
+
+	if not os.path.exists('cart/predictions'):
+		os.makedirs('cart/predictions')
+
+	if not os.path.exists('cart/tree'):
+		os.makedirs('cart/tree')
 
 	main(inputFileName)
