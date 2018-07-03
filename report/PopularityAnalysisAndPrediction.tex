@@ -23,9 +23,15 @@ This is something to take into account when trying to predict popularity of acto
 \end{itemize}
 
 \subsection{Correlation with only one feature}
-First approach to explaining popularity was using Pearson’s correlation. 
+As shown in Fig.~\ref{fig:popularityDistribution} our first approach to explaining popularity was using Pearson correlation. 
 
-TODO PEARSON'S GRAPHIC
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{graphics/10Works_correlation_Pearson.png}
+	\caption{Pearson correlation between some features of nodes.}
+	\label{fig:pearsonCorr}
+	\end{center}
+\end{figure}
 
 A fairly big correlation can be seen between popularity and amount of works. Since this data is biased to more modern anime we thought of trying to correlate with more recent works only. But, how recent? Last 5, 10 or 20 years? Thus correlation between popularity and works from different data frames was analyzed, Fig.~\ref{fig:correlationPopRecentWorks}.
 
@@ -37,19 +43,18 @@ A fairly big correlation can be seen between popularity and amount of works. Sin
 	\end{center}
 \end{figure}
 
-The best result was given by recent works from last 9 years. Therefore this definition of recent works was used from there on.
+The best result was given by recent works from last 9 years. Therefore, this definition of recent works was used from there on.
 
-Graphics of some characteristics of works divided by years were made, trying to shed some light over why works from last 9 years were more "important". TODO EXPLANATION OF EACH FIGURE AND RE-WRITE THIS PART: 
-- looking at graphs Fig.~\ref{fig:avgCaracteristicsOfWorks} it seems avg popularity, favorites and score of anime from last 9 years is not better that previous, actually is worst. but as we can see on Fig.~\ref{fig:amountOfWorksPerYear} they are more, anime industry is growing bigger each year, in a exponential way, not only that but MAL should have info of every adaptation of last year but maybe not for anime from 1980.
+Graphics of some characteristics of works divided by years were made, trying to shed some light over why works from last 9 years were more "important". Fig.~\ref{fig:avgCaracteristicsOfWorks} shows an improvement in average of scores and favorites, with the biggest peak in 2005. Popularity goes down but we need to consider that this metrics are from MAL and it could mean, for example, the parameter is in disuse, instead of representing how people feel about new anime.
 
-The majority of works are from 1990 to 2018 and half of them are distributed over the last 14 years (2014 to 2018) but as far as we can tell there isn’t anything particular over the last 9 years nor on year 2009.
+As we can see on Fig.~\ref{fig:amountOfWorksPerYear} there's more anime recently, industry is growing bigger each year, in an exponential way; not only that but MAL should have info of every adaptation of last year but maybe not for anime from 1980.
+
+The majority of works are from 1990 to 2018 and half of them are distributed over the last 14 years (2014 to 2018) but as far as we can tell there isn’t anything particular over the last 9 years nor on year 2009. Judging by amount of favorites per year it appears that users have been more active in recent years so this could be one of the reasons.
 
 \begin{figure}[!hbt]
 	\begin{center}
-	\includegraphics[width=\columnwidth]{graphics/avgFavoritesPerYear_1960-2018.png}
-	\includegraphics[width=\columnwidth]{graphics/avgScorePerYear_1960-2018.png}
-	\includegraphics[width=\columnwidth]{graphics/avgWorksPopularityPerYear_1960-2018.png}
-	\caption{TODO ADD DESCRIPTION.}
+	\includegraphics[width=\columnwidth]{graphics/avgFavoritesScorePopularityPerYear.png}
+	\caption{Average favorites, score and popularity per year.}
 	\label{fig:avgCaracteristicsOfWorks}
 	\end{center}
 \end{figure}
