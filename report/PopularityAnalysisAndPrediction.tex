@@ -1,6 +1,6 @@
-\section{Analysis and prediction of seiyuu popularity}
+\chapter{Analysis and prediction of seiyuu popularity}
 
-\PARstart{P}{opularity} is an abstract criterion that must be defined as a numerical metric in order to be used for analysis and prediction. Since we are using MAL database for seiyuu and anime information and it has a social component; seems logic to use member\_favorites as a representation of popularity. We can also get popularity and score for works from opinions of the same set of users.
+Popularity is an abstract criterion that must be defined as a numerical metric in order to be used for analysis and prediction. Since we are using MAL database for seiyuu and anime information and it has a social component; seems logic to use member\_favorites as a representation of popularity. We can also get popularity and score for works from opinions of the same set of users.
 
 In terms of distribution \textit{popularity} is highly unequal \---as we can observe in Fig.~\ref{fig:popularityDistribution}\--- having a lot of seiyuu which are no member favourites and only a few who are favorite of more than 10000 members. It's good to keep in mind that users can favorite multiple seiyuu.
 
@@ -12,6 +12,7 @@ In terms of distribution \textit{popularity} is highly unequal \---as we can obs
 	\end{center}
 \end{figure}
 
+EXPLICAR LO QUE SIGNIFICA QUE SEAN TAN DIFERENTES EN VALORES, MOSTRAR LOS DATOS DEL ITEMIZE
 This is something to take into account when trying to predict popularity of actors or explain it using other features. TODO ADD WHY
 
 \begin{itemize}
@@ -22,13 +23,14 @@ This is something to take into account when trying to predict popularity of acto
 	\item Only 120 values bigger than 1000
 \end{itemize}
 
-\subsection{Correlation with only one feature}
-As shown in Fig.~\ref{fig:popularityDistribution} our first approach to explaining popularity was using Pearson correlation. 
+\section{Correlation with only one feature}
+As shown in Fig.~\ref{fig:pearsonCorr} our first approach to explaining popularity was using Pearson correlation. 
+TODO PONER UN GRAFO DE PEARSON CON CASI TODOS LOS PARAMETROS POSIBLES
 
 \begin{figure}[!hbt]
 	\begin{center}
 	\includegraphics[width=\columnwidth]{graphics/10Works_correlation_Pearson.png}
-	\caption{Pearson correlation between some features of nodes.}
+	\caption{Pearson correlation between popularity and some features of nodes.}
 	\label{fig:pearsonCorr}
 	\end{center}
 \end{figure}
@@ -45,19 +47,18 @@ A fairly big correlation can be seen between popularity and amount of works. Sin
 
 The best result was given by recent works from last 9 years. Therefore, this definition of recent works was used from there on.
 
+SUBSECTION PARA ESTO DE "TRATAR DE BUSCAR EXPLICACION DETRAS DE 'ULTIMOS 9 ES MEJOR'"
 Graphics of some characteristics of works divided by years were made, trying to shed some light over why works from last 9 years were more "important". Fig.~\ref{fig:avgCaracteristicsOfWorks} shows an improvement in average of scores and favorites, with the biggest peak in 2005. Popularity goes down but we need to consider that this metrics are from MAL and it could mean, for example, the parameter is in disuse, instead of representing how people feel about new anime.
-
-As we can see on Fig.~\ref{fig:amountOfWorksPerYear} there's more anime recently, industry is growing bigger each year, in an exponential way; not only that but MAL should have info of every adaptation of last year but maybe not for anime from 1980.
-
-The majority of works are from 1990 to 2018 and half of them are distributed over the last 14 years (2014 to 2018) but as far as we can tell there isn’t anything particular over the last 9 years nor on year 2009. Judging by amount of favorites per year it appears that users have been more active in recent years so this could be one of the reasons.
 
 \begin{figure}[!hbt]
 	\begin{center}
-	\includegraphics[width=\columnwidth]{graphics/avgFavoritesScorePopularityPerYear.png}
-	\caption{Average favorites, score and popularity per year.}
-	\label{fig:avgCaracteristicsOfWorks}
+	\includegraphics[width=\columnwidth]{graphics/avgFavorites.png}
+	\caption{Average amount of favorites per year.}
+	\label{fig:avgFavorites}
 	\end{center}
 \end{figure}
+
+TODO ADD SCORE, MEMBERS, ETC GRAPHS AND EXPLANATION OF EACH OF THEM
 
 \begin{figure}[!hbt]
 	\begin{center}
@@ -66,11 +67,14 @@ The majority of works are from 1990 to 2018 and half of them are distributed ove
 	\label{fig:amountOfWorksPerYear}
 	\end{center}
 \end{figure}
+As we can see on Fig.~\ref{fig:amountOfWorksPerYear} anime industry is growing bigger each year, of course this is biased by the fact MAL will sure have every adaptation of last year but maybe not for anime from 1980.
+
+The majority of works are from 1990 to 2018 and half of them are distributed over the last 14 years (2014 to 2018) but as far as we can tell there isn’t anything particular over the last 9 years nor on year 2009. Judging by amount of favorites per year it appears that users have been more active in recent years so this could be one of the reasons.
 
 Some interesting enough correlations are shown next
-TODO ADD SCATTER PLOTS AND EXPLAIN A LITTLE MORE
+TODO ADD SCATTER PLOTS AND EXPLAIN MORE
 
-\subsection{Correlation with multiple features}
+\section{Correlation with multiple features}
 For this section Scikit-learn, a free software machine learning Python library, was used. The node attributes were divided into categories, leaving four distinct types:
 
 \begin{itemize}
@@ -100,7 +104,7 @@ For this section Scikit-learn, a free software machine learning Python library, 
 	\end{itemize}
 \end{itemize}
 
-Fitting and prediction experiments were run for each category, each combination of 2, 3 and all of them together; using 80\% as train data and the rest as test. This was done for all following models:
+Fitting and prediction experiments were run for each category, each combination of 2, 3 and all of them together; using 80\% of seiyuu as train data and the rest as test. This was done for all following models:
 \begin{itemize}
 	\item DecisionTreeRegressor
 	\item DecisionTreeClassifier
@@ -116,6 +120,38 @@ To compare prediction performance mean and median absolute error were used. Unfo
 
 TODO SHOW TABLE WITH R2 SCORE RESULTS FOR EACH CATEGORY / MODEL AND GROUP OF CATEGORIES
 
+TO ASK: SHOULD I DIVIDE INTO SECTIONS OF GROUPS OF CATEGORIES? yes
+\subsection{Only one category}
+\begin{table}[!hbt]
+	\begin{center}
+	\caption{Only one category R2 score results}
+	\label{tab:oneCategory}
+	\begin{tabular}{|l|c|c|c|c|}
+		\hline
+		Model / Data & Recent works & Personal & Graph & Work \\ 
+		\hline
+		DecisionTreeClassifier & 0.11 & -0.04 & 0.06 & -1.3 \\ 
+		\hline
+		DecisionTreeRegressor & 0.33 & -0.29 & -0.05 & 0.11 \\ 
+		\hline
+		GaussianNB & 0 & -4.7 & -0.03 & 0 \\ 
+		\hline
+		KNeighborsClassifier & 0.22 & -0.04 & 0.06 & -0.05 \\ 
+		\hline
+		LinearDiscriminantAnalysis & 0.47 & -0.04 & 0.32 & -1.04 \\ 
+		\hline
+		LinearRegression & 0.57 & 0 & 0.28 & 0.42 \\ 
+		\hline
+		SVM & -0.02 & -0.04 & -0.01 & -0.02 \\ 
+		\hline
+	\end{tabular}
+	\end{center}
+\end{table}
 
+\subsection{Groups of two categories}
+\subsection{Groups of three categories}
+\subsection{All categories}
 
+TODO ADD SOME OF THE GRAPHICS ABOUT FEATURE IMPORTANCE FOR DTC (ONLY BEST ONES) AND EXPLAIN (FOR EACH SUBSECTION)
 
+ADD THE NEW CATEGORIZATION OF SEIYUU AND PREDICTION RESULTS (lo tengo que hacer primero)
