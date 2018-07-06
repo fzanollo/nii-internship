@@ -90,7 +90,7 @@ def isMainRole(seiyuuUri, animeUri):
 	return res
 
 def attributeOfWorksStartingIn(seiyuuUri, year, attribute):
-	works = getWorksStartingIn(seiyuuUri, year)
+	works = [elem['anime_uri']['value'] for elem in getWorksStartingIn(seiyuuUri, year)]
 	worksInfo = animeCollection.find({"id": {"$in": works}}, {'id':1, attribute:1})
 
 	values = []
@@ -226,19 +226,19 @@ def prepareWorkAndRecentWorkData(socialNetworkGraph):
 		recentWorkData['amountOfRecentWorks'] = amountOfWorksForStartingIn(seiyuuUri, 2009)
 
 		# genre
-		top5Genres = getTop5Genres(attributeOfWorksStartingIn(seiyuuUri, 1960, 'genre'))
-		workData['worksGenre1'] = genreEncoder.transform([top5Genres[0]])
-		workData['worksGenre2'] = genreEncoder.transform([top5Genres[1]])
-		workData['worksGenre3'] = genreEncoder.transform([top5Genres[2]])
-		workData['worksGenre4'] = genreEncoder.transform([top5Genres[3]])
-		workData['worksGenre5'] = genreEncoder.transform([top5Genres[4]])
+		top5GenresEncoded = genreEncoder.transform(getTop5Genres(attributeOfWorksStartingIn(seiyuuUri, 1960, 'genre')))
+		workData['worksGenre1'] = top5GenresEncoded[0]
+		workData['worksGenre2'] = top5GenresEncoded[1]
+		workData['worksGenre3'] = top5GenresEncoded[2]
+		workData['worksGenre4'] = top5GenresEncoded[3]
+		workData['worksGenre5'] = top5GenresEncoded[4]
 
-		top5Genres = getTop5Genres(attributeOfWorksStartingIn(seiyuuUri, 2009, 'genre'))
-		recentWorkData['recentWorksGenre1'] = genreEncoder.transform([top5Genres[0]])
-		recentWorkData['recentWorksGenre2'] = genreEncoder.transform([top5Genres[1]])
-		recentWorkData['recentWorksGenre3'] = genreEncoder.transform([top5Genres[2]])
-		recentWorkData['recentWorksGenre4'] = genreEncoder.transform([top5Genres[3]])
-		recentWorkData['recentWorksGenre5'] = genreEncoder.transform([top5Genres[4]])
+		top5GenresEncoded = genreEncoder.transform(getTop5Genres(attributeOfWorksStartingIn(seiyuuUri, 2009, 'genre')))
+		recentWorkData['recentWorksGenre1'] = top5GenresEncoded[0]
+		recentWorkData['recentWorksGenre2'] = top5GenresEncoded[1]
+		recentWorkData['recentWorksGenre3'] = top5GenresEncoded[2]
+		recentWorkData['recentWorksGenre4'] = top5GenresEncoded[3]
+		recentWorkData['recentWorksGenre5'] = top5GenresEncoded[4]
 
 		# other features
 		for feature in desiredFeaturesOfWorks:
