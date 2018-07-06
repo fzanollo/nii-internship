@@ -4,6 +4,7 @@ import io
 
 import yaml
 import json
+import time
 
 API_CONSULTS_COUNTER = 0
 
@@ -15,6 +16,8 @@ def consultAPI(query):
 	
 	if 'error' in response:
 		print(u'\n api error: [{0}] when asking for query: [{1}] with API_CONSULTS_COUNTER: {2}\n'.format(response['error'], query, API_CONSULTS_COUNTER))
+
+	time.sleep(2)
 
 	return response
 
@@ -66,15 +69,15 @@ def getUri(seiyuu):
 def getSeiyuuInfo(seiyuu):
 	response = {}
 
-	if 'MAL_ID' not in seiyuu:
- 		malId = recoverMalId(seiyuu)
-		seiyuu['MAL_ID'] = {"type": "literal", "value": malId}
+	# if 'MAL_ID' not in seiyuu:
+ # 		malId = recoverMalId(seiyuu)
+	# 	seiyuu['MAL_ID'] = {"type": "literal", "value": malId}
 
-	if seiyuu['MAL_ID']['value'] != -1:
-		baseURL = 'https://api.jikan.moe/person/'
-		malId = seiyuu['MAL_ID']['value']
+	# if 'MAL_ID' in seiyuu:
+		# baseURL = 'https://api.jikan.moe/person/'
+	malId = seiyuu['MAL_ID']['value']
 
-		response = consultAPI(baseURL + str(malId) + '/')
+	response = consultAPI(malId + '/')
 	
 	return response
 
@@ -90,16 +93,21 @@ def main(inputFileName, outputFileName, fromSeiyuIndex, toSeiyuIndex, limitToApi
 	for i in xrange(fromSeiyuIndex, upTo):
 		seiyuu = seiyuus[i]
 
-		info = getSeiyuuInfo(seiyuu)
+		if 'MAL_ID' in seiyuu:
 
-		outputFile.write(u'{{ "id":"{0}", "data":{1} }}'.format(getUri(seiyuu), json.dumps(info, ensure_ascii=False)))
+			info = getSeiyuuInfo(seiyuu)
 
-		if i < upTo-1:
-			outputFile.write(u',')
+			if not 'error' in info:
+				info["id"] = getUri(seiyuu)
 
-		outputFile.write(u'\n')
+				outputFile.write(u'{0}'.format(json.dumps(info, ensure_ascii=False)))
 
-		print('Seiyu number: {0}, API_CONSULTS_COUNTER: {1}'.format(i, API_CONSULTS_COUNTER))
+				if i < upTo-1:
+					outputFile.write(u',')
+
+				outputFile.write(u'\n')
+
+			print('Seiyu number: {0}, API_CONSULTS_COUNTER: {1}'.format(i, API_CONSULTS_COUNTER))
 		if API_CONSULTS_COUNTER >= limitToApiConsults:
 			break
 
