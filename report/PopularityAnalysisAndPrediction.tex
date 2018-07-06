@@ -153,6 +153,7 @@ For this section Scikit-learn, a free software machine learning Python library, 
 		\item Favorites
 		\item Score
 		\item Popularity
+		\item Members
 	\end{itemize}
 	\item Recent works data:
 	\begin{itemize}
@@ -179,11 +180,12 @@ Fitting and prediction experiments were run for each category, each combination 
 
 We have to take into account popularity variance when trying to predict it since usual error metrics don't distinguish between small or big values. If we predict exactly a seiyuu that has \textgreater50000 popularity but we make "small" mistakes predicting seiyuu with \textless100 popularity then, is it a good prediction? and having into account more than $\frac{3}{4}$ of them have \textless100 popularity?
 
-We use r2\_score\footnote{\url{http://scikit-learn.org/stable/modules/model_evaluation.html#r2-score-the-coefficient-of-determination}}  for accuracy comparison, since its\textbf{TODO BUSCAR UNA BUENA METRICA, CORRER LAS COSAS DE NUEVO Y ACOMODAR ESTO}
-To compare prediction performance mean and median absolute error were used. Unfortunately since popularity variance is really high we observed good results in terms of absolute error but particular predictions were aloof. That's why we ended up using r2\_score for accuracy comparation. 
+To compare prediction performance mean and median absolute error were used. Unfortunately since popularity variance is really high we observed good results in terms of absolute error but particular predictions were aloof. This is why we use r2\_score\footnote{\url{http://scikit-learn.org/stable/modules/model_evaluation.html#r2-score-the-coefficient-of-determination}} for accuracy comparation. 
 
-\textbf{TODO SHOW TABLE WITH R2 SCORE RESULTS FOR EACH CATEGORY / MODEL AND GROUP OF CATEGORIES}
+\textbf{TODO SHOW TABLE WITH R2 SCORE RESULTS FOR EACH CATEGORY / MODEL AND GROUP OF CATEGORIES}\\
+\textbf{TODO ADD SOME OF THE GRAPHICS ABOUT FEATURE IMPORTANCE FOR DTC (ONLY BEST ONES) AND EXPLAIN (FOR EACH SUBSECTION)}
 
+\FloatBarrier
 \subsection{Only one category}
 \begin{table}[!hbt]
 	\begin{center}
@@ -211,11 +213,89 @@ To compare prediction performance mean and median absolute error were used. Unfo
 	\end{center}
 \end{table}
 
+\FloatBarrier
 \subsection{Groups of two categories}
-\subsection{Groups of three categories}
-\subsection{All categories}
+\begin{table}[!hbt]
+	\begin{center}
+	\caption{Two categories R2 score results (R: recent works, P: personal, G: graph, W: work)}
+	\label{tab:twoCategories}
+	\begin{tabular}{|l|c|c|c|c|c|c|}
+		\hline
+		Model / Data & R + P & R + G & R + W & P + G & P + W & G + W\\
+		\hline
+		DecisionTreeClassifier & -1.36 & -0.32 & -0.14 & -0.65 & 0.16 & -9.74 \\
+		\hline
+		DecisionTreeRegressor & 0.35 & 0.24 & 0.78 & -2.67 & 0.28 & -0.89 \\
+		\hline
+		GaussianNB & 0 & 0.01 & 0.02 & 0 & -0.01 & 0.03 \\
+		\hline
+		KNeighborsClassifier & 0.33 & 0.14 & 0.14 & 0.12 & 0.15 & -0.04 \\
+		\hline
+		LinearDiscriminantAnalysis & 0.45 & 0.31 & 0.77 & -3.05 & 0.04 & -5.59 \\
+		\hline
+		LinearRegression & 0.46 & 0.32 & 0.54 & 0.18 & 0.35 & -0.09 \\
+		\hline
+		SVM & -0.01 & 0 & -0.02 & -0.05 & -0.01 & -0.04 \\
+		\hline
+	\end{tabular}
+	\end{center}
+\end{table}
 
-\textbf{TODO ADD SOME OF THE GRAPHICS ABOUT FEATURE IMPORTANCE FOR DTC (ONLY BEST ONES) AND EXPLAIN (FOR EACH SUBSECTION)}
+\FloatBarrier
+\subsection{Groups of three categories}
+\begin{table}[!hbt]
+	\begin{center}
+	\caption{Three categories R2 score results (R: recent works, P: personal, G: graph, W: work)}
+	\label{tab:threeCategories}
+	\begin{tabular}{|l|c|c|c|c|}
+		\hline
+		Model / Data & R + P + G & R + P + W & R + G + W & P + G + W \\
+		\hline
+		DecisionTreeClassifier & -0.05 & -0.28 & 0.41 & -2.49 \\
+		\hline
+		DecisionTreeRegressor & 0.36 & -0.12 & 0.59 & -1.9 \\
+		\hline
+		GaussianNB & 0.01 & 0.01 & 0.01 & -0.01 \\
+		\hline
+		KNeighborsClassifier & 0.24 & 0.22 & 0.15 & 0.19 \\
+		\hline
+		LinearDiscriminantAnalysis & 0.27 & 0.49 & 0.44 & -1.68 \\
+		\hline
+		LinearRegression & 0.42 & 0.52 & 0.42 & 0.13 \\
+		\hline
+		SVM & 0 & -0.02 & -0.01 & -0.02 \\
+		\hline
+	\end{tabular}
+	\end{center}
+\end{table}
+
+\FloatBarrier
+\subsection{All categories}
+\begin{table}[!hbt]
+	\begin{center}
+	\caption{Only one category R2 score results}
+	\label{tab:allCategories}
+	\begin{tabular}{|l|c|}
+		\hline
+		Model / Data & AllFeatures \\
+		\hline
+		DecisionTreeClassifier & 0.52 \\
+		\hline
+		DecisionTreeRegressor & 0.03 \\
+		\hline
+		GaussianNB & 0 \\
+		\hline
+		KNeighborsClassifier & 0.13 \\
+		\hline
+		LinearDiscriminantAnalysis & 0.54 \\
+		\hline
+		LinearRegression & 0.42 \\
+		\hline
+		SVM & -0.01 \\
+		\hline
+	\end{tabular}
+	\end{center}
+\end{table}
 
 \section{Seiyuu classification}
 \textbf{ADD THE NEW CATEGORIZATION OF SEIYUU AND PREDICTION RESULTS (lo tengo que hacer primero)}
