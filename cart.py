@@ -75,14 +75,14 @@ def measures(values):
 	return suma, mean, median, maximum
 
 def getMalNumberFromUri(animeUri):
-	return animeUri[animeUri.rfind('/')+1:]
+	return int(animeUri[animeUri.rfind('/')+1:])
 
 def isMainRole(seiyuuUri, animeUri):
 	res = False
 	roleInfo = seiyuuCollection.find_one(
 		{"id": "{0}".format(seiyuuUri)}, 
 		{"voice_acting_role": {"$elemMatch":{"anime.mal_id":getMalNumberFromUri(animeUri)}}})
-
+	
 	if "voice_acting_role" in roleInfo: 
 		role = roleInfo["voice_acting_role"][0]['character']['role']		
 		res = role == 'Main'
