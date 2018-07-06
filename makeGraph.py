@@ -138,13 +138,11 @@ if __name__ == '__main__':
 	fromYear = 1960
 	toYear = 2018
 
-	if len(sys.argv) >= 2:
-		requiredWorksInCommon = int(sys.argv[1])
-		
-	if len(sys.argv) >= 3:
-		fromYear = int(sys.argv[2])
-
 	if len(sys.argv) >= 4:
+		requiredWorksInCommon = int(sys.argv[1])
 		toYear = int(sys.argv[3])
+		fromYear = int(sys.argv[2])
 		
-	main(requiredWorksInCommon, fromYear, toYear)
+		main(requiredWorksInCommon, fromYear, toYear)
+	else:
+		print('order of parameters is: requiredWorksInCommon, fromYear, toYear')
