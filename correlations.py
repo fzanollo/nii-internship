@@ -7,6 +7,7 @@ import json
 
 import networkx as nx
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -17,6 +18,7 @@ from pymongo import MongoClient
 client = MongoClient()
 db = client.seiyuuData
 animeCollection = db.anime
+seiyuuCollection = db.seiyuu
 
 def querySPARQLEndpoint(query):
 	sparql = SPARQLWrapper("http://localhost:8890/sparql")
@@ -40,34 +42,6 @@ def getWorksStartingIn(seiyuuUri, year):
 		}}
 		""".format(seiyuuUri, year))
 
-def getAverageQltyOfWorksStartingIn(seiyuuUri, year):
-	works = getWorksStartingIn(seiyuuUri, year)
-
-	qualities = []
-	for work in works:
-		animeUri = work['anime_uri']['value']
-		animeData = animeCollection.find_one({"id":animeUri})
-		if 'data' in animeData:
-			qualities.append(animeData['data']['score'])
-
-	average = 0
-	if len(qualities)>0:
-		average = sum(qualities)/len(qualities)
-		
-	return average
-
-def getPopularityOfWorksStartingIn(seiyuuUri, year):
-	works = getWorksStartingIn(seiyuuUri, year)
-
-	popularityOfWorks = 0
-	for work in works:
-		animeUri = work['anime_uri']['value']
-		animeData = animeCollection.find_one({"id":animeUri})
-		if 'data' in animeData:
-			popularityOfWorks += animeData['data']['favorites']
-
-	return popularityOfWorks
-
 def getAmountOfWorksStartingIn(seiyuuUri, year):
 	result = querySPARQLEndpoint("""
 		SELECT count(?anime_uri)
@@ -86,6 +60,7 @@ def getAmountOfWorks(seiyuuUri):
 
 def plotHeatmap(correlations, filename):
 	# plot heatmap
+	plt.subplots(figsize=(15,10))
 	ax = sns.heatmap(correlations.T, annot=True, cmap="Reds")
 	# turn the axis label
 	for item in ax.get_xticklabels():
@@ -113,6 +88,63 @@ def plotScatterBetween(dataFrame, xName, yName, pearsonCorrelations, spearmanCor
 	plt.savefig('graphics/{2}scatterCorr_{0}_{1}.png'.format(xName, yName, prefix), bbox_inches='tight', dpi=100)
 	plt.close()
 
+def measures(values):
+	suma = mean = median = maximum = 0
+	if len(values)>0:
+		suma = sum(values)
+		mean = np.mean(values)
+		median = np.median(values)
+		maximum = max(values)
+	# return suma, mean, median, maximum
+	return mean
+
+def getMalNumberFromUri(animeUri):
+	return int(animeUri[animeUri.rfind('/')+1:])
+
+def isMainRole(seiyuuUri, animeUri):
+	res = False
+	roleInfo = seiyuuCollection.find_one(
+		{"id": "{0}".format(seiyuuUri)}, 
+		{"voice_acting_role": {"$elemMatch":{"anime.mal_id":getMalNumberFromUri(animeUri)}}})
+	
+	if "voice_acting_role" in roleInfo: 
+		role = roleInfo["voice_acting_role"][0]['character']['role']		
+		res = role == 'Main'
+
+	return res
+
+def attributeOfWorksStartingIn(seiyuuUri, year, attribute):
+	works = [elem['anime_uri']['value'] for elem in getWorksStartingIn(seiyuuUri, year)]
+	worksInfo = animeCollection.find({"id": {"$in": works}}, {'id':1, attribute:1})
+
+	values = []
+	for work in worksInfo:
+		value = work[attribute]
+
+		if attribute != 'genre':
+			if isMainRole(seiyuuUri, work['id']):
+				values.append(value)
+			else:
+				values.append(value//2)
+
+	return values
+
+def numberOfMainRolesFor(seiyuuUri):
+	works = getWorksStartingIn(seiyuuUri, 1960)
+
+	numberOfMainRoles = 0
+
+	values = []
+	for work in works:
+		animeUri = work['anime_uri']['value']
+
+		if isMainRole(seiyuuUri, animeUri):
+			numberOfMainRoles += 1
+
+	if numberOfMainRoles>0:
+		print('{0}: {1}'.format(seiyuuUri, numberOfMainRoles))
+	return numberOfMainRoles
+
 def main(inputFileName):
 	prefix = re.search(r"\d+", inputFileName).group() + 'Works_'
 	socialNetworkGraph = nx.read_gexf(inputFileName)
@@ -131,24 +163,34 @@ def main(inputFileName):
 	activityYears = dict([(seiyu, 2018-int(debut)) for seiyu, debut in debuts.items()])
 
 	popularities = nx.get_node_attributes(socialNetworkGraph, 'popularity')
+	genders = nx.get_node_attributes(socialNetworkGraph, 'gender')
 
 	#-------
 	amountOfWorks = {}
 	amountOfRecentWorks = {}
-	popularityOfWorks = {}
-	popularityOfRecentWorks = {}
-	averageQltyOfWorks = {}
-	averageQltyOfRecentWorks = {}
+	avgPopularityOfWorks = {}
+	avgPopularityOfRecentWorks = {}
+	avgScoreOfWorks = {}
+	avgScoreOfRecentWorks = {}
+	avgMembersOfWorks = {}
+	avgMembersOfRecentWorks = {}
+	numberOfMainRoles = {}
 
 	for seiyuuUri in socialNetworkGraph.nodes():
 		amountOfWorks[seiyuuUri] = getAmountOfWorks(seiyuuUri)
-		amountOfRecentWorks[seiyuuUri] = getAmountOfWorksStartingIn(seiyuuUri, 2009)
+		# amountOfRecentWorks[seiyuuUri] = getAmountOfWorksStartingIn(seiyuuUri, 2009)
 
-		popularityOfWorks[seiyuuUri] = getPopularityOfWorksStartingIn(seiyuuUri, 1960)
-		popularityOfRecentWorks[seiyuuUri] = getPopularityOfWorksStartingIn(seiyuuUri, 2009)
+		avgPopularityOfWorks[seiyuuUri] = measures(attributeOfWorksStartingIn(seiyuuUri, 1960, 'popularity'))
+		# avgPopularityOfRecentWorks[seiyuuUri] = measures(attributeOfWorksStartingIn(seiyuuUri, 2009, 'popularity'))
 
-		averageQltyOfWorks[seiyuuUri] = getAverageQltyOfWorksStartingIn(seiyuuUri, 1960)
-		averageQltyOfRecentWorks[seiyuuUri] = getAverageQltyOfWorksStartingIn(seiyuuUri, 2009)
+		avgScoreOfWorks[seiyuuUri] = measures(attributeOfWorksStartingIn(seiyuuUri, 1960, 'score'))
+		# avgScoreOfRecentWorks[seiyuuUri] = measures(attributeOfWorksStartingIn(seiyuuUri, 2009, 'score'))
+
+		avgMembersOfWorks[seiyuuUri] = measures(attributeOfWorksStartingIn(seiyuuUri, 1960, 'members'))
+		# avgMembersOfRecentWorks[seiyuuUri] = measures(attributeOfWorksStartingIn(seiyuuUri, 2009, 'members'))
+
+		numberOfMainRoles[seiyuuUri] = numberOfMainRolesFor(seiyuuUri)
+
 
 	# correlations
 	columnDataDict = {
@@ -156,24 +198,33 @@ def main(inputFileName):
 		'betweenness': btwC, 
 		'closeness': closeness,
 		'eigenvector': eigenvector,
+
+		'debut': debuts,
 		'activityYears': activityYears,
 		'popularity': popularities,
+		
 		'amountOfWorks': amountOfWorks,
-		'amountOfRecentWorks(last9years)': amountOfRecentWorks,
-		'popularityOfWorks': popularityOfWorks,
-		'popularityOfRecentWorks': popularityOfRecentWorks
-		'averageQltyOfWorks': averageQltyOfWorks,
-		'averageQltyOfRecentWorks': averageQltyOfRecentWorks
+		# 'amountOfRecentWorks(last9years)': amountOfRecentWorks,
+
+		'avgPopularityOfWorks': avgPopularityOfWorks,
+		# 'avgPopularityOfRecentWorks': avgPopularityOfRecentWorks,
+		'avgScoreOfWorks': avgScoreOfWorks,
+		# 'avgScoreOfRecentWorks': avgScoreOfRecentWorks,
+		'avgMembersOfWorks': avgMembersOfWorks,
+		# 'avgMembersOfRecentWorks': avgMembersOfRecentWorks,
+
+		'numberOfMainRoles': numberOfMainRoles
 	}
 
 	df = pd.DataFrame(columnDataDict)
 
 	# Spearman, Pearson, Kendall
-	# pearsonCorr = df.corr('pearson')
+	pearsonCorr = df.corr('pearson')
+	# print(pearsonCorr)
 	# spearmanCorr = df.corr('spearman')
 	# kendallCorr = df.corr('kendall')
 
-	# plotHeatmap(pearsonCorr, prefix + 'correlation_Pearson')
+	plotHeatmap(pearsonCorr, prefix + 'correlation_Pearson')
 	# plotHeatmap(spearmanCorr, prefix + 'correlation_Spearman')
 	# plotHeatmap(kendallCorr, prefix + 'correlation_Kendall')
 
