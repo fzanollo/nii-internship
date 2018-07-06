@@ -1,13 +1,14 @@
 \chapter{Anime/Seiyuu Dataset}
 
-TODO DIVIDIR UN POCO MAS ESTA PARTE EN SUBSECTIONS Y AGREGAR MAS INFO O MUESTRAS DE DATOS
+\textbf{TODO AGREGAR MAS INFO O MUESTRAS DE DATOS Y UN POCO DE INTRODUCCION}
 
+\section{Wikidata}
 Wikidata\footnote{http://wikidata.org/} is a collaboratively edited knowledge base intended to provide a common source of data which can be used by Wikimedia projects such as Wikipedia. The information is stored in RDF format, and can be retrieved in multiple ways, one of them being through a SPARQL endpoint.
 
 Using Wikidata's SPARQL endpoint we retrieved a list of seiyuu. This list contains all persons that have seiyuu as occupation, a total of 6472 entities were obtained\footnote{There's actually 7030 seiyuu in Wikidata but only 6472 of them have an English label (name)}. Gender, birthday and birthplace information was also fetched (last two were not used in the end because it was lacking in the majority of entities).
 
-Since Wikidata information about seiyuu's works is really incomplete, MyAnimeList (MAL)\footnote{https://myanimelist.net/} was used to retrieve voice acting roles and anime information. MAL is a social networking and social cataloging application website with a large database on anime and manga that started in April 6, 2006. Users can make a list of currently watching, watched and/or favorite anime; score, review, comment and recommend similar ones. They can also comment about and favorite people working on the industry (voice actors, directors, editors, etc).\\
-
+\section{MyAnimeList}
+Wikidata information about seiyuu's works is really incomplete that's why MyAnimeList (MAL)\footnote{https://myanimelist.net/} was used to retrieve voice acting roles and anime information. MAL is a social networking and social cataloging application website with a large database on anime and manga that started in April 6, 2006. Users can make a list of currently watching, watched and/or favorite anime; score, review, comment and recommend similar ones. They can also comment about and favorite people working on the industry (voice actors, directors, editors, etc).
 
 Since only 59 of Wikidata's seiyuu entities had MyAnimeList ID (MALID) property, a matching between Wikidata and MyAnimeList was done using seiyuu's complete name to retrieve the ID for those who was missing. Successfully restoring 3033 MALIDs, giving a total of 3092 seiyuus with that property; 2956 of them having at least one work according to MAL so we are using this subset for our experiments.
 
@@ -15,7 +16,9 @@ Using Jikan API\footnote{https://jikan.docs.apiary.io/\#} and MALID, seiyuu data
 
 An issue to take into account is whether we unify all anime adaptations of the same intellectual property as one or take a single adaptation as a independent work. We chose the later because each adaptation has its own producer, score, popularity, among other information; it would be incorrect to say a seiyuu worked in a popular work when that adaptation didn't have enough fame.\\
 
-Information used:
+\section{Data retrieved}
+All in all we were able to retrieve the following information for 2956 seiyuu and 7614 anime.
+
 \begin{itemize}
 	\item For Seiyuu:
 	\begin{itemize}

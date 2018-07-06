@@ -1,12 +1,10 @@
 \documentclass[a4paper]{report}
-
-%\usepackage{cite}      
+ 
 \usepackage{graphicx}
-%\usepackage{psfrag} 
-%\usepackage{subfigure} 
-\usepackage{url}       
-%\usepackage{stfloats} 
-
+\usepackage{url}
+\usepackage{subcaption}
+\usepackage[section]{placeins} % Ensure floats do not go into the next section
+\usepackage{rotating} % For rotating figures, tables, etc. Including their captions
 
 \begin{document}
 	\title{Overview of anime voice actor's social network and popularity.}
@@ -24,7 +22,7 @@
 	\end{itemize}
 \end{abstract}
 
-\chapter*{Introduction}
+\chapter{Introduction}
 	TODO
 
 % Main Part
@@ -32,7 +30,7 @@
 \input{SeiyuuSocialNetwork.tex}
 \input{PopularityAnalysisAndPrediction.tex}
 
-\chapter*{Conclusion}
+\chapter{Conclusion}
 	
 
 \begin{thebibliography}{5}
