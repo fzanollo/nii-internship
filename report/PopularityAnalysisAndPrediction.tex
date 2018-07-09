@@ -56,19 +56,22 @@ Some metrics about popularity:
 	\end{center}
 \end{table}
 
+\newpage
 \section{Correlation with only one feature}
-As shown in Fig.~\ref{fig:pearsonCorr} our first approach to explaining popularity was using Pearson correlation. 
-\textbf{TODO PONER UN GRAFO DE PEARSON CON CASI TODOS LOS PARAMETROS POSIBLES EN VEZ DE EL QUE ESTA AHORA}
+Our first approach to explaining popularity was using Pearson correlation.
 
 \begin{figure}[!h]
-	\begin{center}
-	\includegraphics[width=\columnwidth]{graphics/10Works_correlation_Pearson.png}
-	\caption{Pearson correlation between popularity and some features of nodes.}
-	\label{fig:pearsonCorr}
-	\end{center}
+	\begin{flushleft}
+	\makebox[\textwidth][c]{\includegraphics[width=1.7\columnwidth]{graphics/10Works_correlation_Pearson_allWorks.png}}%
+	\caption{Pearson correlation between popularity and attribute of nodes (using all works).}
+	\label{fig:pearsonCorrAllWorks}
+	\end{flushleft}
 \end{figure}
 
-A fairly big correlation can be seen between popularity and amount of works. Since this data is biased to more modern anime we thought of trying to correlate with more recent works only. But, how recent? Last 5, 10 or 20 years? Thus correlation between popularity and works from different data frames was analyzed, Fig.~\ref{fig:correlationPopRecentWorks}.
+As shown on Fig.~\ref{fig:pearsonCorrAllWorks} a fairly big correlation can be seen between popularity and amount of works. This attribute doesn't have the biggest correlation with popularity but "number of main roles" was added to the end of this investigation since we didn't had the data for doing so before. 
+We are showing only average of values for work's attributes (ex. favorites) mostly for better visualization but for predictions we use sum, mean, median and maximum.
+
+Since our dataset is biased in favor of more modern anime we thought of correlate with more recent works only. But, how recent? Last 5, 10 or 20 years? Thus correlation between popularity and works from different data frames was analyzed, Fig.~\ref{fig:correlationPopRecentWorks}.
 
 \begin{figure}[!h]
 	\begin{center}
@@ -80,9 +83,19 @@ A fairly big correlation can be seen between popularity and amount of works. Sin
 
 The best result was given by recent works from last 9 years. Therefore, this definition of recent works was used from there on.
 
+Fig.~\ref{fig:pearsonCorrRecentWorks} shows the result of running Pearson again but using information from last 9 years of works only. It's important to clarify that we didn't build the network using only last 9 years, so betweenness centrality and degree are exactly the same as before. We left "amount of works" attribute for easy comparision against "amount of recent works".
+
+\begin{figure}[!h]
+	\begin{flushleft}
+	\makebox[\textwidth][c]{\includegraphics[width=1.7\columnwidth]{graphics/10Works_correlation_Pearson_recentWorks.png}}%
+	\caption{Pearson correlation between popularity and attribute of nodes (using recent works only).}
+	\label{fig:pearsonCorrRecentWorks}
+	\end{flushleft}
+\end{figure}
+
 \FloatBarrier
 \subsection{Why last 9 years of works has more correlation?}
-Graphics of some characteristics of works divided by years were made, trying to shed some light over why works from last 9 years were more "important". 
+Graphics of some characteristics of works divided by years were made, trying to shed some light over why works from last 9 years were more "important".
 
 \begin{sidewaysfigure}
 	\centering
@@ -115,10 +128,9 @@ Graphics of some characteristics of works divided by years were made, trying to 
 \end{sidewaysfigure}
 
 Fig.~\ref{fig:avgFavorites} and ~\ref{fig:avgScores} shows an improvement in average of scores and favorites. 
-
 Biggest peak of favorites is on 2005, this may have to do with the start of MAL (2006), see Fig.~\ref{fig:avgFavorites}. We suppose as users started to use MAL they favorite anime they liked from that year and only some of the old ones; from then on they used the website often and favorite new works as they began airing.
 
-2018 was left out of Fig.~\ref{fig:avgScores} because, since 2018 is not finished yet, the average of scores was unusually small.
+Year 2018 was left out of Fig.~\ref{fig:avgScores} because, since 2018 is not finished yet, the average of scores was unusually small.
 
 As Fig.~\ref{fig:avgPopularities} shows, popularity goes down in last years. But we need to consider that this metrics are from MAL and it could mean, for example, the parameter is in disuse; instead of representing how people feel about new anime.\\
 
@@ -191,25 +203,7 @@ To compare prediction performance mean and median absolute error were used. Unfo
 	\begin{center}
 	\caption{Only one category R2 score results}
 	\label{tab:oneCategory}
-	\begin{tabular}{|l|c|c|c|c|}
-		\hline
-		Model / Data & Recent works & Personal & Graph & Work \\ 
-		\hline
-		DecisionTreeClassifier & 0.11 & -0.04 & 0.06 & -1.3 \\ 
-		\hline
-		DecisionTreeRegressor & 0.33 & -0.29 & -0.05 & 0.11 \\ 
-		\hline
-		GaussianNB & 0 & -4.7 & -0.03 & 0 \\ 
-		\hline
-		KNeighborsClassifier & 0.22 & -0.04 & 0.06 & -0.05 \\ 
-		\hline
-		LinearDiscriminantAnalysis & 0.47 & -0.04 & 0.32 & -1.04 \\ 
-		\hline
-		LinearRegression & 0.57 & 0 & 0.28 & 0.42 \\ 
-		\hline
-		SVM & -0.02 & -0.04 & -0.01 & -0.02 \\ 
-		\hline
-	\end{tabular}
+	\include{tables/oneCategory_r2score}
 	\end{center}
 \end{table}
 
@@ -219,25 +213,7 @@ To compare prediction performance mean and median absolute error were used. Unfo
 	\begin{center}
 	\caption{Two categories R2 score results (R: recent works, P: personal, G: graph, W: work)}
 	\label{tab:twoCategories}
-	\begin{tabular}{|l|c|c|c|c|c|c|}
-		\hline
-		Model / Data & R + P & R + G & R + W & P + G & P + W & G + W\\
-		\hline
-		DecisionTreeClassifier & -1.36 & -0.32 & -0.14 & -0.65 & 0.16 & -9.74 \\
-		\hline
-		DecisionTreeRegressor & 0.35 & 0.24 & 0.78 & -2.67 & 0.28 & -0.89 \\
-		\hline
-		GaussianNB & 0 & 0.01 & 0.02 & 0 & -0.01 & 0.03 \\
-		\hline
-		KNeighborsClassifier & 0.33 & 0.14 & 0.14 & 0.12 & 0.15 & -0.04 \\
-		\hline
-		LinearDiscriminantAnalysis & 0.45 & 0.31 & 0.77 & -3.05 & 0.04 & -5.59 \\
-		\hline
-		LinearRegression & 0.46 & 0.32 & 0.54 & 0.18 & 0.35 & -0.09 \\
-		\hline
-		SVM & -0.01 & 0 & -0.02 & -0.05 & -0.01 & -0.04 \\
-		\hline
-	\end{tabular}
+	\include{tables/twoCategories_r2score}
 	\end{center}
 \end{table}
 
@@ -247,25 +223,7 @@ To compare prediction performance mean and median absolute error were used. Unfo
 	\begin{center}
 	\caption{Three categories R2 score results (R: recent works, P: personal, G: graph, W: work)}
 	\label{tab:threeCategories}
-	\begin{tabular}{|l|c|c|c|c|}
-		\hline
-		Model / Data & R + P + G & R + P + W & R + G + W & P + G + W \\
-		\hline
-		DecisionTreeClassifier & -0.05 & -0.28 & 0.41 & -2.49 \\
-		\hline
-		DecisionTreeRegressor & 0.36 & -0.12 & 0.59 & -1.9 \\
-		\hline
-		GaussianNB & 0.01 & 0.01 & 0.01 & -0.01 \\
-		\hline
-		KNeighborsClassifier & 0.24 & 0.22 & 0.15 & 0.19 \\
-		\hline
-		LinearDiscriminantAnalysis & 0.27 & 0.49 & 0.44 & -1.68 \\
-		\hline
-		LinearRegression & 0.42 & 0.52 & 0.42 & 0.13 \\
-		\hline
-		SVM & 0 & -0.02 & -0.01 & -0.02 \\
-		\hline
-	\end{tabular}
+	\include{tables/threeCategories_r2score}
 	\end{center}
 \end{table}
 
@@ -275,25 +233,7 @@ To compare prediction performance mean and median absolute error were used. Unfo
 	\begin{center}
 	\caption{Only one category R2 score results}
 	\label{tab:allCategories}
-	\begin{tabular}{|l|c|}
-		\hline
-		Model / Data & AllFeatures \\
-		\hline
-		DecisionTreeClassifier & 0.52 \\
-		\hline
-		DecisionTreeRegressor & 0.03 \\
-		\hline
-		GaussianNB & 0 \\
-		\hline
-		KNeighborsClassifier & 0.13 \\
-		\hline
-		LinearDiscriminantAnalysis & 0.54 \\
-		\hline
-		LinearRegression & 0.42 \\
-		\hline
-		SVM & -0.01 \\
-		\hline
-	\end{tabular}
+	\include{tables/allCategories_r2score}
 	\end{center}
 \end{table}
 
