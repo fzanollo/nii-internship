@@ -90,7 +90,7 @@ def isMainRole(seiyuuUri, animeUri):
 	return res
 
 def attributeOfWorksStartingIn(seiyuuUri, year, attribute):
-	works = [elem['anime_uri']['value'] for elem in getWorksStartingIn(seiyuuUri, year)]
+	works = getWorksStartingIn(seiyuuUri, year)
 	worksInfo = animeCollection.find({"id": {"$in": works}}, {'id':1, attribute:1})
 
 	values = []
@@ -98,12 +98,21 @@ def attributeOfWorksStartingIn(seiyuuUri, year, attribute):
 		value = work[attribute]
 
 		if attribute != 'genre':
-			if isMainRole(seiyuuUri, work['id']):
-				values.append(value)
-			else:
-				values.append(value//2)
-
+			values.append(value)
+			
 	return values
+
+def numberOfMainRolesForFrom(seiyuuUri, year):
+	works = getWorksStartingIn(seiyuuUri, year)
+
+	numberOfMainRoles = 0
+
+	values = []
+	for animeUri in works:
+		if isMainRole(seiyuuUri, animeUri):
+			numberOfMainRoles += 1
+
+	return numberOfMainRoles
 
 def amountOfWorksForStartingIn(seiyuuUri, year):
 	result = querySPARQLEndpoint("""
@@ -158,6 +167,38 @@ def plotTree(model, data, filename):
 	graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  
 	graph.write_png('cart/tree/{0}.png'.format(filename))
 
+def abreviate(columnNames):
+	newColumnNames = []
+
+	for coln in columnNames:
+		words = coln.split('_')
+		newColn = ''
+		for word in words:
+			letter = word[0]
+			newColn = newColn + '+' + letter
+
+		newColumnNames.append(newColn[1:])
+
+	return newColumnNames
+
+def getTop5Genres(worksGenreList):
+	genreAmountDict = {}
+
+	for workGenre in worksGenreList:
+		for genre in workGenre:
+			genre = genre['name']
+			if genre not in genreAmountDict:
+				genreAmountDict[genre] = 0
+			genreAmountDict[genre] += 1
+
+	allGenres = [x[0] for x in sorted(genreAmountDict.items(), key=operator.itemgetter(1), reverse=True)]
+	top5Genres = allGenres[:5]
+
+	if len(top5Genres) < 5:
+		top5Genres += [u'None' for x in xrange(5-len(top5Genres))]
+
+	return top5Genres
+
 def preparePersonalData(socialNetworkGraph):
 	debuts = nx.get_node_attributes(socialNetworkGraph, 'debut')
 	genders = nx.get_node_attributes(socialNetworkGraph, 'gender')
@@ -186,24 +227,6 @@ def prepareGraphData(socialNetworkGraph):
 	
 	return graphData
 
-def getTop5Genres(worksGenreList):
-	genreAmountDict = {}
-
-	for workGenre in worksGenreList:
-		for genre in workGenre:
-			genre = genre['name']
-			if genre not in genreAmountDict:
-				genreAmountDict[genre] = 0
-			genreAmountDict[genre] += 1
-
-	allGenres = [x[0] for x in sorted(genreAmountDict.items(), key=operator.itemgetter(1), reverse=True)]
-	top5Genres = allGenres[:5]
-
-	if len(top5Genres) < 5:
-		top5Genres += [u'None' for x in xrange(5-len(top5Genres))]
-
-	return top5Genres
-
 def prepareWorkAndRecentWorkData(socialNetworkGraph):
 	workDataPerSeiyuu = {}
 	recentWorkDataPerSeiyuu = {}
@@ -224,6 +247,10 @@ def prepareWorkAndRecentWorkData(socialNetworkGraph):
 		# amount
 		workData['amountOfWorks'] = amountOfWorksFor(seiyuuUri)
 		recentWorkData['amountOfRecentWorks'] = amountOfWorksForStartingIn(seiyuuUri, 2009)
+
+		# number of main roles
+		workData['numberOfMainRoles'] = numberOfMainRolesForFrom(seiyuuUri, 1960)
+		recentWorkData['numberOfRecentMainRoles'] = numberOfMainRolesForFrom(seiyuuUri, 2009)
 
 		# genre
 		top5GenresEncoded = genreEncoder.transform(getTop5Genres(attributeOfWorksStartingIn(seiyuuUri, 1960, 'genre')))
@@ -311,10 +338,10 @@ def main(inputFileName):
 
 	# MODELS
 	allCategoriesData = {
-		'personalData': personalData, 
-		'workData': workData,
-		'recentWorkData': recentWorkData,
-		'graphData': graphData
+		'Personal': personalData, 
+		'Work': workData,
+		'RecentWorks': recentWorkData,
+		'Graph': graphData
 	}
 	categories = allCategoriesData.keys()
 
@@ -345,10 +372,30 @@ def main(inputFileName):
 			data = pd.concat([allCategoriesData[c] for c in combination], axis=1)
 			results[categoryName] = runModels(models, data, target, categoryName)
 
-	with open('cart/predictionR2Score.csv', 'w') as outputFile:
-		# TODO: formatear el output para tabla en pdf o algo asi (o seaborn)
-		resultsDF = pd.DataFrame(results)
-		outputFile.write(resultsDF.to_csv())
+	# OUTPUT
+	resultsDF = pd.DataFrame(results)
+
+	# one category
+	with open('cart/oneCategory_r2score.tex', 'w') as oneCategoryOutfile:
+		oneCategoryOutfile.write(resultsDF.ix[:, :4].to_latex()) # first 4 columns
+
+	# two categories
+	with open('cart/twoCategories_r2score.tex', 'w') as twoCategoriesOutfile:
+		twoCategoriesResults = resultsDF.ix[:, 4:10] # from column 5 to 10
+		twoCategoriesResults.columns = abreviate(twoCategoriesResults.columns)
+
+		twoCategoriesOutfile.write(twoCategoriesResults.to_latex())
+	
+	# three categories
+	with open('cart/threeCategories_r2score.tex', 'w') as threeCategoriesOutfile:
+		threeCategoriesResults = resultsDF.ix[:, 10:14] # from column 10 to 14
+		threeCategoriesResults.columns = abreviate(threeCategoriesResults.columns)
+
+		threeCategoriesOutfile.write(threeCategoriesResults.to_latex())
+
+	# all categories
+	with open('cart/allCategories_r2score.tex', 'w') as allCategoriesOutfile:
+		allCategoriesOutfile.write(resultsDF.ix[:, 14:15].to_latex()) # last column
 
 if __name__ == '__main__':
 	inputFileName = 'graphs/atLeast1Works_1960-1960.gexf'
