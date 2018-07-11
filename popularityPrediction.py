@@ -374,7 +374,7 @@ def main(inputFileName):
 
 	# OUTPUT
 	resultsDF = pd.DataFrame(results)
-	with open('cart/predictionsR2Scores.tex', 'w') as outfile:
+	with open('cart/predictionsR2Scores.csv', 'w') as outfile:
 		outfile.write(resultsDF.to_csv())
 
 	# one category
