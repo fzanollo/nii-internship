@@ -374,29 +374,29 @@ def main(inputFileName):
 
 	# OUTPUT
 	resultsDF = pd.DataFrame(results)
-	with open('cart/predictionsR2Scores.csv', 'w') as outfile:
+	with open('predictionResults/predictionsR2Scores.csv', 'w') as outfile:
 		outfile.write(resultsDF.to_csv())
 
 	# one category
-	with open('cart/oneCategory_r2score.tex', 'w') as oneCategoryOutfile:
+	with open('predictionResults/oneCategory_r2score.tex', 'w') as oneCategoryOutfile:
 		oneCategoryOutfile.write(resultsDF.ix[:, :4].to_latex()) # first 4 columns
 
 	# two categories
-	with open('cart/twoCategories_r2score.tex', 'w') as twoCategoriesOutfile:
+	with open('predictionResults/twoCategories_r2score.tex', 'w') as twoCategoriesOutfile:
 		twoCategoriesResults = resultsDF.ix[:, 4:10] # from column 5 to 10
 		twoCategoriesResults.columns = abreviate(twoCategoriesResults.columns)
 
 		twoCategoriesOutfile.write(twoCategoriesResults.to_latex())
 	
 	# three categories
-	with open('cart/threeCategories_r2score.tex', 'w') as threeCategoriesOutfile:
+	with open('predictionResults/threeCategories_r2score.tex', 'w') as threeCategoriesOutfile:
 		threeCategoriesResults = resultsDF.ix[:, 10:14] # from column 10 to 14
 		threeCategoriesResults.columns = abreviate(threeCategoriesResults.columns)
 
 		threeCategoriesOutfile.write(threeCategoriesResults.to_latex())
 
 	# all categories
-	with open('cart/allCategories_r2score.tex', 'w') as allCategoriesOutfile:
+	with open('predictionResults/allCategories_r2score.tex', 'w') as allCategoriesOutfile:
 		allCategoriesOutfile.write(resultsDF.ix[:, 14:15].to_latex()) # last column
 
 if __name__ == '__main__':
@@ -405,13 +405,13 @@ if __name__ == '__main__':
 	if len(sys.argv) >= 2:
 		inputFileName = sys.argv[1]
 
-	if not os.path.exists('cart/'):
-		os.makedirs('cart/')
+	if not os.path.exists('predictionResults/'):
+		os.makedirs('predictionResults/')
 
-	if not os.path.exists('cart/predictions'):
-		os.makedirs('cart/predictions')
+	if not os.path.exists('predictionResults/predictions'):
+		os.makedirs('predictionResults/predictions')
 
-	if not os.path.exists('cart/tree'):
-		os.makedirs('cart/tree')
+	if not os.path.exists('predictionResults/tree'):
+		os.makedirs('predictionResults/tree')
 
 	main(inputFileName)
