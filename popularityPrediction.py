@@ -141,11 +141,11 @@ def plotPredictions(measured, predicted, filename, boundaries):
 	ax.set_ylabel('Predicted')
 
 	plt.title(filename)
-	plt.savefig('cart/predictions/{0}.png'.format(filename), bbox_inches='tight', dpi=100)
+	plt.savefig('predictionResults/predictions/{0}.png'.format(filename), bbox_inches='tight', dpi=100)
 	# plt.show()
 	plt.close()
 
-	with open('cart/predictions/{0}.json'.format(filename), 'w') as outputFile:
+	with open('predictionResults/predictions/{0}.json'.format(filename), 'w') as outputFile:
 		outputFile.write(json.dumps({
 			'xs': measured,
 			'ys': predicted,
@@ -165,7 +165,7 @@ def plotTree(model, data, filename):
 					special_characters=True, feature_names=data.columns.values.tolist())
 
 	graph = pydotplus.graph_from_dot_data(dot_data.getvalue())  
-	graph.write_png('cart/tree/{0}.png'.format(filename))
+	graph.write_png('predictionResults/tree/{0}.png'.format(filename))
 
 def abreviate(columnNames):
 	newColumnNames = []
@@ -301,14 +301,13 @@ def runModels(models, data, target, categoryName):
 		plotPredictions(target_test, predicted, categoryName + '_' + modelName, [target.min(), target.max()])
 
 		results[modelName] = round(metrics.r2_score(target_test, predicted), 2)
-		
 
 		if modelName == 'DecisionTreeClassifier':
 			featureImportances = pd.Series(model.feature_importances_, index=data.columns)
 			featureImportances = featureImportances.nlargest(20)
 			featureImportances.plot(kind='barh')
 			plt.title(categoryName)
-			plt.savefig('cart/tree/{0}_DTC_featureImportances.png'.format(categoryName), bbox_inches='tight', dpi=100)
+			plt.savefig('predictionResults/tree/{0}_DTC_featureImportances.png'.format(categoryName), bbox_inches='tight', dpi=100)
 			# plt.show()
 			plt.close()
 
