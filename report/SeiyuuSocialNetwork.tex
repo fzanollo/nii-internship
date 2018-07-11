@@ -8,13 +8,6 @@ So our social network consists of voice actors as nodes and co-workership betwee
 
 Aside from being time dependant there exists different possible definitions of relationship or co-workership between seiyuu. One could say two actors know each other if they have worked in at least one job together, or maybe it requires more than one. There's also a time frame to define, relationship could take into account all works of both of them or only from certain years.\\
 
-We analized two definitions of relationship:
-\begin{itemize}
-\item at least 1 work in common
-\item at least 10 works in common
-\end{itemize}
-Both of them during the time frame between the first debut registered (1960) and the year of observation.
-
 \section{Construction}
 As a first approach Gephi was used to build the network. Since the graph was big enough to bring performance problems and we needed to build the edges dynamically (which couldn't be done in Gephi) NetworkX was used instead.
 
@@ -25,7 +18,12 @@ One can export the graph and open it on Gephi, for a more visual analysis.
 And also we needed to build the edges dynamically because according to our definition they depend on the time frame we are looking at. For example, for at least 10 works in common, if two actors worked together in 9 jobs between 1960 and 1970 we shouldn't see an edge between them; but if they worked together again in 1971 then looking at 1960-1971 they should be connected.
 
 \section{Analysis}
-\textbf{TODO AGREGAR EXPLICACION DE QUE VAMOS A VER COMO SON Y SI SON MUY DISTINTAS O NO Y EN QUE SOBRE ESTOS DOS GRAFOS}
+In this section we are going to compare and analyze two definitions of relationship for our social network in order to understand more about it structure and decide on a definition:
+\begin{itemize}
+\item at least 1 work in common
+\item at least 10 works in common
+\end{itemize}
+Both of them during the time frame between the first debut registered (1960) and the year of observation.
 
 Is easy to tell at first glance that this social network is really interconnected. With merely 2956 nodes it has 395887 edges when only one work in common is required and 13629 edges when asking for 10 or more. It shows a thightly interconnected cluster surrounded by poorly or not connected nodes. This cluster represents 99\% of the nodes of one work in common graph and 23\% of 10 works in common. In terms of modularity we can see at least four clear communities in each graph, Fig~\ref{fig:graph1CommunityColoured} and Fig~\ref{fig:graph10CommunityColoured}.
 
@@ -45,8 +43,7 @@ Is easy to tell at first glance that this social network is really interconnecte
 	\end{center}
 \end{figure}
 
-\textbf{TODO PARAFRASEAR ESTO Y QUIZAS MOVER AL FINAL DE LA SECCION}
-Table~\ref{tab:graphComparision} shows some metrics about each graph. Requiring more works in common decreases average degree circumstantially but doesn't change a lot modularity or network diameter.
+Table~\ref{tab:graphComparision} shows metrics about each graph. Requiring more works in common decreases average degree circumstantially but doesn't change much modularity or network diameter.
 
 \begin{table}[!hbt]
 	\begin{center}
@@ -104,8 +101,8 @@ As proven by Fig.~\ref{fig:grouwthOfEdges} grouwth of edges by year follows a si
  
 Fig.~\ref{fig:grouwthOfNodes} shows that more than half of the nodes are from last 18 years (2000 to 2018), giving us an idea of how much seiyuu industry is growing.
 
-\subsection{At least 1 work in common}
-Table~\ref{tab:top10atLeast1Work} shows top 10 nodes, for degree and betweenness centrality. \textbf{TODO AGREGAR MAS EXPLICACION, POR EJ SI SON FAMOSOS O NO, EDAD, ETC (IDEM PARA EL OTRO)}
+\FloatBarrier
+Table~\ref{tab:top10atLeast1Work} shows top 10 nodes, for degree and betweenness centrality for "at least 1 work in common" definition. And Table~\ref{tab:top10atLeast10Works} does the same for "at least 10 works in common".
 
 \begin{table}[!htb]
     \begin{minipage}{.5\textwidth}
@@ -169,9 +166,6 @@ Table~\ref{tab:top10atLeast1Work} shows top 10 nodes, for degree and betweenness
     \caption{At least one work in common}
     \label{tab:top10atLeast1Work}
 \end{table}
-
-\subsection{At least 10 works in common}
-Table~\ref{tab:top10atLeast10Works} shows top 10 nodes, for degree and betweenness centrality. \textbf{TODO AGREGAR MAS EXPLICACION, POR EJ SI SON FAMOSOS O NO, EDAD, ETC}
 
 \begin{table}[!htb]
     \begin{minipage}{.5\textwidth}
@@ -237,13 +231,12 @@ Table~\ref{tab:top10atLeast10Works} shows top 10 nodes, for degree and betweenne
 \end{table}
 
 \section{Conclusion}
-\textbf{TODO AGREGAR QUE TIENEN TOP 10 PARECIDO Y QUE NO CAMBIA MUCHO LA FORMA GENERAL DEL GRAFO, PONER QUE ACÁ USO LAS DOS DEFINICIONES PARA MOSTRAR LO PARECIDAS QUE SON EN ESTRUCTURA Y QUE PARA EL RESTO USO LA DE AL MENOS 10 TRABAJOS o algo asi}
-After observing graphs built with different interpretations of relationship, the criteria for connecting two nodes became: \textit{at least 10 works in common, during the time frame between the first debut registered (1960) and the year of observation}.
-Because requiring more jobs in common means less amount of edges, this leaves a more understandable graph and we verified it does without changing its structure.
+Both networks have fairly similar top 10s so it points to them having similar structure and connections amoung their nodes, aside from actual values.\\
 
-There's also other interesting definitions of relationship, for example we can use only common works from the last x years or from all time. This options weren't explored; having into account our limited time.
+From now on our definition for edges will be: \textit{at least 10 works in common, during the time frame between the first debut registered (1960) and the year of observation}. Because requiring more jobs in common means less amount of edges, this leaves a more understandable graph and we verified it does without changing its structure so much.\\
 
-\textbf{TODO PARAFRASEAR ESTO TAMBIEN (Y VER SI QUEDA ACA O LO MUEVO)}
+There's also other interesting definitions of relationship, for example we can use only common works from the last x years or from all time. This options weren't explored; having into account our limited time.\\
+
 Table~\ref{tab:moreInfoSeiyuu} shows a little more information about seiyuu that appear on top 10s.
 \begin{table}[!hbt]
 	\begin{center}
