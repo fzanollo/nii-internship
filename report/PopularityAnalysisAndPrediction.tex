@@ -24,6 +24,8 @@ Some metrics about popularity:
 	\item Only 120 values bigger than 1000
 \end{itemize}
 
+\textbf{TODO AGREGAR ALGUNOS DE LOS ROLES MÁS FAMOSOS DE CADA UNO ;)}
+
 \begin{table}[!h]
 	\begin{center}
 	\caption{Top 10 popular seiyuu}
@@ -68,7 +70,8 @@ Our first approach to explaining popularity was using Pearson correlation.
 	\end{flushleft}
 \end{figure}
 
-As shown on Fig.~\ref{fig:pearsonCorrAllWorks} a fairly big correlation can be seen between popularity and amount of works. This attribute doesn't have the biggest correlation with popularity but "number of main roles" was added to the end of this investigation since we didn't had the data for doing so before. 
+As shown on Fig.~\ref{fig:pearsonCorrAllWorks} a fairly big correlation can be seen between popularity and amount of works. This attribute doesn't have the biggest correlation with popularity but "number of main roles" was added to the end of this investigation since we didn't had the data for doing so before. Number of main roles and amount of works have a strong correlation with each other (0.9) but they have different influence over popularity, this means they provide distinct information.
+
 We are showing only average of values for work's attributes (ex. favorites) mostly for better visualization but for predictions we use sum, mean, median and maximum.
 
 Since our dataset is biased in favor of more modern anime we thought of correlate with more recent works only. But, how recent? Last 5, 10 or 20 years? Thus correlation between popularity and works from different data frames was analyzed, Fig.~\ref{fig:correlationPopRecentWorks}.
@@ -191,12 +194,51 @@ Fitting and prediction experiments were run for each category, each combination 
 	\item SVM
 \end{itemize}
 
-We have to take into account popularity variance when trying to predict it since usual error metrics don't distinguish between small or big values. If we predict exactly a seiyuu that has \textgreater50000 popularity but we make "small" mistakes predicting seiyuu with \textless100 popularity then, is it a good prediction? and having into account more than $\frac{3}{4}$ of them have \textless100 popularity?
+We used r2\_score\footnote{\url{http://scikit-learn.org/stable/modules/model_evaluation.html#r2-score-the-coefficient-of-determination}} for accuracy comparation. Problem is, since popularity variance is really high, we observed some good results in terms of r2\_score values but particular predictions were aloof. 
 
-To compare prediction performance mean and median absolute error were used. Unfortunately since popularity variance is really high we observed good results in terms of absolute error but particular predictions were aloof. This is why we use r2\_score\footnote{\url{http://scikit-learn.org/stable/modules/model_evaluation.html#r2-score-the-coefficient-of-determination}} for accuracy comparation. 
+If we predict without error a seiyuu whose popularity is \textgreater50000 but we make "small" mistakes predicting seiyuu with \textless100 popularity then, is it a good prediction? and having into account more than $\frac{3}{4}$ of them have \textless100 popularity? 
 
-\textbf{TODO ADD SOME OF THE GRAPHICS ABOUT FEATURE IMPORTANCE FOR DTC (ONLY BEST ONES) AND EXPLAIN (FOR EACH SUBSECTION)}
+This was happening to our predictions. Since they were on spot for higher popularity values their prediction performance's metrics were good; but in fact they failed on small values, which is the big majority of them. 
 
+Fig.~\ref{fig:scatterPlot_DTC_WR} and Fig.~\ref{fig:scatterPlot_LR_WR} shows some examples.\\
+
+\begin{figure}
+	\centering
+	\begin{subfigure}{.5\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{graphics/Work_RecentWorks_DecisionTreeClassifier.png}
+		\caption{All values.}
+	\end{subfigure}%
+	\begin{subfigure}{.5\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{graphics/Work_RecentWorks_DecisionTreeClassifierZOOM.png}
+		\caption{If we zoom in we can tell it's actually bad predictions.}
+	\end{subfigure}
+	\caption{Scatter plot showing predicted / measured for Decision Tree Classifier using model Work + RecentWorks.}
+	\label{fig:scatterPlot_DTC_WR}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\begin{subfigure}{.5\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{graphics/Work_RecentWorks_LinearRegression.png}
+		\caption{All values.}
+		\label{fig:avgFavorites}
+	\end{subfigure}%
+	\begin{subfigure}{.5\columnwidth}
+		\centering
+		\includegraphics[width=\columnwidth]{graphics/Work_RecentWorks_LinearRegressionZOOM.png}
+		\caption{Zoomed in.}
+		\label{fig:avgScores}
+	\end{subfigure}
+	\caption{Scatter plot showing predicted / measured for Linear Regression using model Work + RecentWorks.}
+	\label{fig:scatterPlot_LR_WR}
+\end{figure}
+
+On the next subchapters we present r2\_score values for each algorithm and each combination of categories. Along with information about which feature is more important, from the Decision Tree Classifier's point of view (for only some of the models).
+
+%-------------------------------------------------------------------------------
 \FloatBarrier
 \subsection{Only one category}
 \begin{table}[!hbt]
@@ -207,6 +249,27 @@ To compare prediction performance mean and median absolute error were used. Unfo
 	\end{center}
 \end{table}
 
+Table.~\ref{tab:oneCategory} reveals that Recent Works is the most performant if we are only using one category.
+
+\begin{figure}[!hbt]
+	\centering
+	\includegraphics[width=\columnwidth]{graphics/Personal_DTC_featureImportances.png}
+	\caption{Feature information contribution for Personal data.}
+	\label{fig:DTC_P}
+\end{figure}
+
+Fig.~\ref{fig:DTC_P} shows that Decision Tree Classifier firstly uses activity years and debut to distinguish between most clases.
+
+\begin{figure}[!hbt]
+	\centering
+	\includegraphics[width=\columnwidth]{graphics/RecentWorks_DTC_featureImportances.png}
+	\caption{Feature information contribution for Recent works.}
+	\label{fig:DTC_R}
+\end{figure}
+
+Decision Tree Classifier has bad performance when using only Recent works data but there's something very interesting about Fig.~\ref{fig:DTC_R}, when using Work and Recent works "number of \textit{recent} main roles" is not used to classify but here it is used; we suppose is because it doesn't provide new information against "number of mail roles" (see Fig.~\ref{fig:DTC_WR}).
+
+%-------------------------------------------------------------------------------
 \FloatBarrier
 \subsection{Groups of two categories}
 \begin{table}[!hbt]
@@ -217,6 +280,18 @@ To compare prediction performance mean and median absolute error were used. Unfo
 	\end{center}
 \end{table}
 
+Table.~\ref{tab:twoCategories} shows ones of the best r2\_scores of all predictions. Decision Tree Classifier, Linear Discriminant Analysis and Linear Regression all did well when using Work + Recent Works model.
+
+\begin{figure}[!hbt]
+	\centering
+	\includegraphics[width=\columnwidth]{graphics/Work_RecentWorks_DTC_featureImportances.png}
+	\caption{Feature information contribution for Work + Recent works model.}
+	\label{fig:DTC_WR}
+\end{figure}
+
+As Fig.~\ref{fig:DTC_WR} reveals number of main roles is a very important feature to classify seiyuu by popularity. We saw earlier that it has a strong correlation.
+
+%-------------------------------------------------------------------------------
 \FloatBarrier
 \subsection{Groups of three categories}
 \begin{table}[!hbt]
@@ -227,14 +302,42 @@ To compare prediction performance mean and median absolute error were used. Unfo
 	\end{center}
 \end{table}
 
+According to Table.~\ref{tab:threeCategories} three categories models have bad performance for most algorithm but it also has the highest (best) value of all. Is achieved by K Neighbors Classifier when using Personal + Graph + Recent works data.
+
+\begin{figure}[!hbt]
+	\centering
+	\includegraphics[width=\columnwidth]{graphics/Personal_Work_RecentWorks_DTC_featureImportances.png}
+	\caption{Feature information contribution for Personal + Work + Recent works model.}
+	\label{fig:DTC_PWR}
+\end{figure}
+
+Fig.~\ref{fig:DTC_PWR} tells us, as we already saw before, that number of main roles is a very important feature. Also, notice that number of \textit{recent} main roles does not appear.
+
+%-------------------------------------------------------------------------------
 \FloatBarrier
 \subsection{All categories}
 \begin{table}[!hbt]
 	\begin{center}
-	\caption{Only one category R2 score results}
+	\caption{All categories R2 score results}
 	\label{tab:allCategories}
 	\include{tables/allCategories_r2score}
 	\end{center}
 \end{table}
 
+Table.~\ref{tab:allCategories} Decision Tree Classifier has bad performance when using all categories, this can be because it overfits train data. Linear Discriminant Analysis and Linear Regression doesn't seem to do that bad, Decision Tree Regressor also. Of course, once we saw the scatter plots particular predictions were wrong most of the times for small values, showing a very different reality from value of metrics.
+
+\begin{figure}[!hbt]
+	\centering
+	\includegraphics[width=\columnwidth]{graphics/AllFeatures_DTC_featureImportances.png}
+	\caption{Feature information contribution for model using all categories.}
+	\label{fig:DTC_All}
+\end{figure}
+
+As Fig.~\ref{fig:DTC_All} shows, even when using all features "number of main roles" is still the one that separates more values, having almost double importance than the second one (sum of score of works).
+
+%-------------------------------------------------------------------------------
 \section{Conclusion}
+
+Since particular predictions were usually wrong (mostly for small values) this couldn't be used in a practical way to predict popularity of new seiyuu nor to recover lost values. 
+
+\textbf{TODO, LO BUENO ES QUE PUDIMOS VER IMPORTANCIA DE LOS FEATURES, QUE NUMBER OF MAIN ROLES ES IMPORTANTE, QUE LAS METRICAS SON DIFICILES DE USAR CUANDO HAY MUCHA VARIANZA?, PUDIMOS COMPARAR LOS DISTINTOS ALGORITMOS, VIENDO CUANDO ERAN MAS O MENOS PERFORMANTES...PO...NE...LE}
