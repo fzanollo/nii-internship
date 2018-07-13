@@ -97,8 +97,7 @@ def attributeOfWorksStartingIn(seiyuuUri, year, attribute):
 	for work in worksInfo:
 		value = work[attribute]
 
-		if attribute != 'genre':
-			values.append(value)
+		values.append(value)
 			
 	return values
 
