@@ -85,18 +85,19 @@ But, how recent? Last 5, 10 or 20 years?
 %-------------------------------------------------------------------------
 
 \begin{frame}
-ENTONCES LA DEFINICION DE RECENT WORKS ES BLA
+So our definition of recent works will be last 9 years.
 \begin{center}
 \includegraphics[scale=0.45]{graphics/popCorrelationRecentWorks.png} 
 \end{center}
 \begin{itemize}
-\item TODO AGREGAR DATOS ACA COMO QUE RECENT WORKS ES MAS IMPORTANTE, BLA
+\item Amount of recent works has more correlation with popularity than not recent.
+\item It also happens with number of main roles.
 \end{itemize}
 \end{frame}
 %-------------------------------------------------------------------------
 
 \begin{frame}
-EL HECHO DE QUE TRATAMOS DE EXPLICAR POR QUE? O MEJOR NO?
+Next graphs were made in order to discover \emph{why} \textit{9 years} prior had more correlation. 
 \begin{figure}
 	\centering
 	\begin{subfigure}{.4\columnwidth}
@@ -121,6 +122,90 @@ EL HECHO DE QUE TRATAMOS DE EXPLICAR POR QUE? O MEJOR NO?
 %-------------------------------------------------------------------------
 
 \subsection{Prediction}
-\begin{frame}
-popularity
+\begin{frame}{Popularity: Prediction}
+The node attributes were divided into categories, leaving four distinct types:
+
+\begin{figure}
+	\centering
+	\begin{subfigure}{.4\columnwidth}
+		\begin{itemize}
+			\item Personal data:
+			\begin{itemize}
+				\item Debut
+				\item Gender
+				\item Activity years (2018-debut)
+			\end{itemize}
+			\item Works data:
+			\begin{itemize}
+				\item Amount
+				\item Top 5 genre
+				\item Favorites
+				\item Score
+				\item Popularity
+				\item Members
+				\item Number of main roles
+			\end{itemize}
+		\end{itemize}
+	\end{subfigure}%
+	\begin{subfigure}{.6\columnwidth}
+		\begin{itemize}
+			\item Recent works data:
+			\begin{itemize}
+				\item Same as works but for only last 9 years
+			\end{itemize}	
+			\item Graph data:
+			\begin{itemize}
+				\item Degree
+				\item Betweenness centrality
+				\item Closeness
+			\end{itemize}
+		\end{itemize}
+	\end{subfigure}
+\end{figure}
 \end{frame}
+%-------------------------------------------------------------------------
+
+\begin{frame}
+Fitting and prediction experiments were run for each category, each combination of 2, 3 and all of them together; using Scikit-learn, 80\% of seiyuu as train data and the rest as test. This was done for all following models:
+\begin{itemize}
+	\item DecisionTreeRegressor
+	\item DecisionTreeClassifier
+	\item LinearRegression
+	\item KNeighborsClassifier
+	\item LinearDiscriminantAnalysis
+	\item GaussianNB
+	\item SVM
+\end{itemize}
+\end{frame}
+%-------------------------------------------------------------------------
+
+\begin{frame}
+Because popularity variance is really high we got good results in metrics but particular predictions were aloof.
+\vspace{5pt}
+
+For example:\\
+\emph{DecisionTreeClassifier} gets a r2\_score of 0.57 when using model data from \emph{works and recent works} categories but the scatter plot doesn't show such good results.
+\vspace{-15pt}
+
+\begin{figure}
+	\begin{subfigure}{.5\columnwidth}
+		\includegraphics[scale=.36]{graphics/Work_RecentWorks_DecisionTreeClassifier.png} 
+	\end{subfigure}%
+	\begin{subfigure}{.5\columnwidth}
+		\includegraphics[scale=.4]{graphics/Work_RecentWorks_DecisionTreeClassifierZOOM.png} 
+		\caption{Zoomed in}
+	\end{subfigure}
+\end{figure}
+
+\end{frame}
+%-------------------------------------------------------------------------
+
+\begin{frame}{Popularity: Feature importance}
+One of our goals about predicting popularity was to use the classifier algorithms to understand which are the key features that differentiates between a "not so much" and a popular seiyuu.
+\vspace{5pt}
+
+For our previous example we got:
+\includegraphics[scale=.5]{graphics/Work_RecentWorks_DTC_featureImportances.png} 
+
+\end{frame}
+%-------------------------------------------------------------------------
