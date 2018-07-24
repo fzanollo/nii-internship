@@ -1,0 +1,10 @@
+,Personal,Graph,Work,RecentWorks,Personal_Graph,Personal_Work,Personal_RecentWorks,Graph_Work,Graph_RecentWorks,Work_RecentWorks,Personal_Graph_Work,Personal_Graph_RecentWorks,Personal_Work_RecentWorks,Graph_Work_RecentWorks,AllFeatures,,,
+DecisionTreeClassifier,-0.02,-3.26,-2.12,-0.59,0.11,-0.43,-1.86,-0.7,-2.51,0.57,-0.9,-8.46,-0.72,-0.73,-0.19,,DecisionTreeClassifier,0.57
+DecisionTreeRegressor,-0.03,-1.05,-0.96,0.35,-2.56,-1.15,-0.37,-0.21,-0.86,0.39,-1.75,-2.12,-1.55,0.2,0.49,,DecisionTreeRegressor,0.49
+GaussianNB,-0.47,-0.57,0.01,0.03,-0.06,0.03,0.01,0.01,0.07,0,0.01,0.05,0.04,0.02,0.01,,GaussianNB,0.07
+KNeighborsClassifier,-0.02,0.04,0.07,0.1,0.1,0.15,0.03,0.08,0.25,0.08,0.06,0.64,-0.04,0.18,0.13,,KNeighborsClassifier,0.64
+LinearDiscriminantAnalysis,-0.02,-4.34,0.31,0.49,-0.35,0.43,-0.08,0.21,0.4,0.62,-0.16,-0.19,0.54,0.51,0.53,,LinearDiscriminantAnalysis,0.62
+LinearRegression,0,0.13,0.31,0.48,0.38,0.57,0.38,0.52,0.33,0.63,-0.96,-1.63,0.09,0.38,0.55,,LinearRegression,0.63
+SVM,-0.02,-0.23,-0.02,0.02,-0.02,0,-0.04,0,0.03,-0.02,-0.03,-0.04,-0.03,-0.02,0.01,,SVM,0.03
+,,,,,,,,,,,,,,,,,,
+,0,0.13,0.31,0.49,0.38,0.57,0.38,0.52,0.4,0.63,0.06,0.64,0.54,0.51,0.55,,,0.64
