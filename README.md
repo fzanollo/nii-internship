@@ -1,5 +1,14 @@
 # NII internship 2018
 
+## Folders
+* Code: contains scripts used for getting information, making graphs and run predictions.
+* Data: json and rdf data backup, may be outdated.
+* Graphics: backup of graphics.
+* PopularityPredictionResults: results backup for an execution of "popularity predictions" script.
+* Presentation: latex files for presentation.
+* Report: latex files for report.
+* SocialNetworks: backup of some of the social networks built.
+
 ## Steps to get RDF data
 1. Get list of seiyuu from Wikidata.
    * Using: retrieveSeiyuuListFromWikidata.py 
@@ -22,3 +31,5 @@
 5. Convert anime information to RDF-turtle and store it locally using virtuoso.
    * Using: animeInfoToRDF.py
    * Parameters: input file name, output file name
+
+6. There are a couple of scripts that recover certain information, such as debut or personal data. This can be separately and added to local database if needed.
