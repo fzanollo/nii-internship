@@ -289,3 +289,45 @@ Table~\ref{tab:moreInfoSeiyuu} shows a little more information about seiyuu that
 	\end{tabular}
 	\end{center}
 \end{table}
+
+\section{Afterwork}
+By the end of the research we were able to grab new information about seiyuu roles; we now know if it was a main role (mostly main character or villian) or not.
+
+Giving this new information we built another social network using the following definition of relationship:\\
+
+\textit{At least one work in common, during the time frame between the first debut registered (1960) and the year of observation, \textbf{using information from  main roles only}.}\\
+
+We'll now present some characteristics of this network.
+
+\begin{figure}[!hbt]
+	\begin{center}
+	\includegraphics[width=\columnwidth]{graphics/atLeast1WorksOnlyMainRoleCommunity.png}
+	\caption{At least one "main role" work in common graph coloured by community. It also has a big cluster at the center.}
+	\label{fig:graph1MWCommunityColoured}
+	\end{center}
+\end{figure}
+
+As Fig.~\ref{fig:graph1MWCommunityColoured} shows this graph's structure is also a strongly connected cluster surrounded by loosely or not connected nodes. Then Table~\ref{tab:newGraphAnalysis} has some features of this network.
+
+\begin{table}[!hbt]
+	\begin{center}
+	\caption{Graph analysis}
+	\label{tab:newGraphAnalysis}
+	\begin{tabular}{|l|c|c|c|}
+		\hline
+		Graph & Avg Degree & Graph Density & Modularity \\
+		\hline
+		Only main works & 14 & 0.005 & 0.355 \\
+		\hline
+	\end{tabular}\\
+	\smallskip
+	\begin{tabular}{|l|c|c|}
+		\hline
+		Graph & Network Diameter & Connected Components \\
+		\hline
+		Only main works & 8 & 1349 \\
+		\hline
+	\end{tabular}
+	\end{center}
+\end{table}
+
