@@ -1,7 +1,10 @@
 # NII internship 2018
 
 Research project for 2017 2nd Call NII International Internship.
-Main target: Social Network of seiyuu (anime voice actors) analysis.
+
+**Main target: Analysis of Social Network of seiyuu (anime voice actors).**
+
+###### This is my first research experience, please be kind and understanding. Hope this will be useful to someone. Thank you!
 
 ## Folders
 * Code: contains scripts used for getting information, making graphs and run predictions.
