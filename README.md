@@ -1,5 +1,8 @@
 # NII internship 2018
 
+Research project for 2017 2nd Call NII International Internship.
+Main target: Social Network of seiyuu (anime voice actors) analysis.
+
 ## Folders
 * Code: contains scripts used for getting information, making graphs and run predictions.
 * Data: json and rdf data backup, may be outdated.
